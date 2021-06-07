@@ -1,0 +1,14 @@
+<idea-plugin>
+    <id>software.mdklatt.idea.netcdf</id>
+    <name>NetCDF</name>
+    <vendor email="mdklatt@alumni.ou.edu" url="https://github.com/mdklatt/idea-netcdf-plugin">Michael Klatt</vendor>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <configurationType implementation="software.mdklatt.idea.netcdf.configurations.HelloConfigurationType"/>
+    </extensions>
+
+</idea-plugin>
