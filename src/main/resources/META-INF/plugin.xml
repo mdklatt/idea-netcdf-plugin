@@ -9,6 +9,9 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <configurationType implementation="software.mdklatt.idea.netcdf.configurations.HelloConfigurationType"/>
+        <fileType name="netCDF" implementationClass="software.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
+        <fileType name="CDL" implementationClass="software.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
+        <fileType name="NcML" implementationClass="software.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
     </extensions>
 
 </idea-plugin>
