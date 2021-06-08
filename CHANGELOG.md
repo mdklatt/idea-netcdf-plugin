@@ -5,3 +5,4 @@
 ## [0.1.0-alpha.0]
 ### Added
 - Added *netCDF*, *CDL*, and *NcML* file types
+- Added netCDF viewer

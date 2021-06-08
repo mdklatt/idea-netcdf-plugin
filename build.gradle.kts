@@ -13,14 +13,21 @@ plugins {
     id("org.jetbrains.changelog") version "1.1.2"
 }
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
+val group = properties("pluginGroup")
+val version = properties("pluginVersion")
+
 
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://artifacts.unidata.ucar.edu/repository/unidata-all/")
+    }
 }
 dependencies {
+    implementation("edu.ucar:cdm:5.1.0")
+    implementation("edu.ucar:netcdf4:5.1.0")
+    implementation("org.slf4j:slf4j-jdk14:1.7.30")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
     testImplementation("org.junit.vintage:junit-vintage-engine:5.7.0")
 }

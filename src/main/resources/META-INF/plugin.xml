@@ -12,6 +12,8 @@
         <fileType name="netCDF" implementationClass="software.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
         <fileType name="CDL" implementationClass="software.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
         <fileType name="NcML" implementationClass="software.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
+        <toolWindow id="NetCDF" secondary="true" icon="AllIcons.General.Modified" anchor="right"
+                    factoryClass="software.mdklatt.idea.netcdf.tools.NetcdfToolWindow"/>
     </extensions>
 
 </idea-plugin>
