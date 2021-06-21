@@ -4,6 +4,7 @@
 package software.mdklatt.idea.netcdf.tools
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.containers.toArray
 import org.junit.jupiter.api.Test
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
@@ -37,4 +38,48 @@ internal class NetcdfToolWindowTest : BasePlatformTestCase() {  // JUnit3
         assertTrue(window.isApplicable(project))
         return
     }
+}
+
+
+/**
+ *
+ */
+internal class NetcdfTableModelTest {  // JUnit5
+
+    val ncFile = NetcdfFile.open("src/test/resources/sresa1b_ncar_ccsm3-example.nc")
+    val model = NetcdfTableModel()
+
+    /**
+     * Test the readSchema() method.
+     */
+    @Test
+    internal fun testReadSchema() {
+        model.readSchema(ncFile)
+        assertEquals(listOf("Variable", "Description", "Units", "Type"), labels())
+    }
+
+    /**
+     * Test the readSchema() method.
+     */
+    @Test
+    internal fun testReadData() {
+        fun column(name: String) : List<String> {
+            val colIndex = labels().indexOf(name)
+            return (1 until model.rowCount).map {
+                model.getValueAt(it, colIndex).toString()
+            }.toList()
+        }
+        val variables = listOf("pr", "tas").map { ncFile.findVariable(it) }.toTypedArray()
+        model.readData(ncFile, variables)
+        assertEquals(listOf("(time, lat, lon)", "pr", "tas"), labels())
+        val labels = listOf("(730135.5, -88.927734, 1.40625)", "(730135.5, -88.927734, 2.8125)")
+        assertEquals(labels, column("(time, lat, lon)").subList(0, 2))
+        val values = listOf("215.80531 ", "215.73935 ")
+        assertEquals(values, column("tas").subList(0, 2))
+    }
+
+    /**
+     * Get column labels.
+     */
+    private fun labels() = (0 until model.columnCount).map { model.getColumnName(it)}.toList()
 }
