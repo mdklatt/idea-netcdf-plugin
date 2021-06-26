@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.*
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
 import ucar.nc2.Dimension
@@ -80,7 +82,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (event == null || selectionModel.isSelectionEmpty) {
                 return
             }
-            val variables = selectedRows.map { ncFile!!.variables[it] }.toTypedArray()
+            variables = selectedRows.map { ncFile!!.variables[it] }.toTypedArray()
             if (!variables.all { it.dimensionsString == variables[0].dimensionsString }) {
                 val message = "Selected variables must have the same dimensions"
                 logger.error(message)
@@ -89,8 +91,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                 selectionModel.removeSelectionInterval(index, index)
                 return
             }
-            (dataTab.model as NetcdfTableModel).readData(ncFile!!, variables)
         }
+
     }
 
     /**
@@ -105,6 +107,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     private var ncFile: NetcdfFile? = null
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
+    private var variables = emptyArray<Variable>()
+
 
     /**
      * Create tool window content.
@@ -113,11 +117,25 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
      * @param window current tool window
      */
     override fun createToolWindowContent(project: Project, window: ToolWindow) {
+        window.addContentManagerListener(object : ContentManagerListener {
+            override fun selectionChanged(event: ContentManagerEvent) {
+                super.selectionChanged(event)
+                event.let {
+                    if (it.index == 1 && it.operation.name == "add") {
+                        // Data tab is selected, load data.
+                        // TODO: Don't hard code the index.
+                        (dataTab.model as NetcdfTableModel).readData(ncFile!!, variables)
+                    }
+                }
+            }
+        })
         val factory = window.contentManager.factory
         factory.createContent(JBScrollPane(schemaTab), "Schema", false).let {
+            it.description = "File schema"
             window.contentManager.addContent(it)
         }
         factory.createContent(JBScrollPane(dataTab), "Data", false).let {
+            it.description = "Selected variables"
             window.contentManager.addContent(it)
         }
         return
@@ -142,6 +160,7 @@ class NetcdfTableModel : DefaultTableModel() {
 
     /**
      * Read a netCDF file schema.
+     * TODO: Make this a row iterator/Sequence and move to Reader class
      */
     public fun readSchema(file: NetcdfFile) {
         clear()
@@ -159,8 +178,11 @@ class NetcdfTableModel : DefaultTableModel() {
 
     /**
      * Read netCDF data variables.
+     * TODO: Make this a row iterator/Sequence and move to Reader class
      */
     public fun readData(ncFile: NetcdfFile, variables: Array<Variable>) {
+        // TODO: Handle _FillValue.
+        // TODO: If these variables are already displayed, don't do anything.
         clear()
         val dimensionString = variables.getOrNull(0)?.dimensionsString ?: ""
         if (!variables.all { it.dimensionsString == dimensionString }) {
@@ -176,7 +198,7 @@ class NetcdfTableModel : DefaultTableModel() {
         setColumnIdentifiers(labels.toTypedArray())
         val rowCoords = cartProd(*dimensions.map { (0 until it.length).toList() }.toTypedArray())
         val rowLabels = cartProd(*dimensions.map { dimensionValues(ncFile, it).toList() }.toTypedArray())
-        rowCoords.zip(rowLabels).withIndex().takeWhile { it.index < 10 }.forEach {
+        rowCoords.zip(rowLabels).withIndex().takeWhile { it.index < 100 }.forEach {
             val coords = it.value.first.toIntArray()
             val values = variables.map { variable ->
                 val shape = IntArray(variable.rank) { 1 }
@@ -210,6 +232,7 @@ class NetcdfTableModel : DefaultTableModel() {
                 while (hasNext()) {
                     values.add(objectNext.toString())
                 }
+                // TODO: Convert time variables to string.
             }
         } else {
             values.addAll((0 until dimension.length).map { it.toString() })
