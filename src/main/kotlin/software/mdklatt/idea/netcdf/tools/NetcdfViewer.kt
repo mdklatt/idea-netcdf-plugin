@@ -15,10 +15,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
-import ucar.nc2.Dimension
-import ucar.nc2.NetcdfFile
-import ucar.nc2.Variable
-import vendor.tandrial.itertools.cartProd
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.dnd.DnDConstants
@@ -36,9 +32,9 @@ import javax.swing.table.DefaultTableModel
  */
 class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     /**
-     * Display the file schema.
+     * File schema content.
      */
-    inner class SchemaTab : JBTable(NetcdfTableModel()) {
+    inner class SchemaTab : JBTable(DefaultTableModel()) {
         private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
 
         init {
@@ -61,9 +57,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                         event.acceptDrop(DnDConstants.ACTION_COPY)
                         val accepted = event.transferable.getTransferData(DataFlavor.javaFileListFlavor)
                         val file = (accepted as? List<*>)?.get(0) as File
-                        ncFile = NetcdfFile.open(file.path)  // TODO: does this throw or return null on failure?
-                        logger.info("Opening netCDF file ${ncFile!!.location}")
-                        (model as NetcdfTableModel).readSchema(ncFile!!)
+                        reader.open(file.path)
+                        load()
                     } catch (_: UnsupportedFlavorException) {
                         JOptionPane.showMessageDialog(null, "Unable to read file")
                     } catch (_: IOException) {
@@ -82,32 +77,67 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (event == null || selectionModel.isSelectionEmpty) {
                 return
             }
-            variables = selectedRows.map { ncFile!!.variables[it] }.toTypedArray()
-            if (!variables.all { it.dimensionsString == variables[0].dimensionsString }) {
+            varNames = selectedRows.map { reader.variables.keys.toList()[it] }.toList()
+            val dimensionString = reader.variables[varNames.first()]?.dimensionsString
+            if (!varNames.all { reader.variables[it]?.dimensionsString == dimensionString }) {
                 val message = "Selected variables must have the same dimensions"
                 logger.error(message)
-                ErrorDialog("Selected variables must have the same dimensions").showAndGet()
+                ErrorDialog(message).showAndGet()
                 val index = selectionModel.anchorSelectionIndex
                 selectionModel.removeSelectionInterval(index, index)
                 return
             }
         }
 
-    }
-
-    /**
-     * Show variable data.
-     */
-    inner class DataTab : JBTable(NetcdfTableModel()) {
-        init {
-            emptyText.text = "Select variable(s) in Schema tab"
+        /**
+         * Load data for display.
+         */
+        private fun load() {
+            val model = this.model as DefaultTableModel
+            model.setDataVector(emptyArray(), emptyArray())
+            model.setColumnIdentifiers(arrayOf("Variable", "Description", "Units", "Type"))
+            reader.variables.values.forEach {
+                model.addRow(arrayOf(
+                    it.nameAndDimensions,
+                    it.description,
+                    it.unitsString,
+                    it.dataType.name,
+                ))
+            }
+            return
         }
     }
 
-    private var ncFile: NetcdfFile? = null
+    /**
+     * Variable data content.
+     */
+    inner class DataTab : JBTable(DefaultTableModel()) {
+        init {
+            emptyText.text = "Select variable(s) in Schema tab"
+        }
+
+        /**
+         * Read netCDF data variables.
+         */
+        internal fun load() {
+            // TODO: Don't do anything if the selected variables are already displayed.
+            val model = this.model as DefaultTableModel
+            model.setDataVector(emptyArray(), emptyArray())
+            val dimNames = reader.variables[varNames.first()]!!.dimensions.map { it.fullName }
+            model.setColumnIdentifiers((dimNames + varNames).toTypedArray())
+            reader.read(varNames).take(100).forEach {
+                val indexValues = it.index.values.map { it.toString() }
+                val dataValues = it.data.values.map { it.toString() }
+                model.addRow((indexValues + dataValues).toTypedArray())
+            }
+            return
+        }
+    }
+
+    private var reader = NetcdfReader()
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
-    private var variables = emptyArray<Variable>()
+    private var varNames = emptyList<String>()
 
 
     /**
@@ -124,7 +154,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                     if (it.index == 1 && it.operation.name == "add") {
                         // Data tab is selected, load data.
                         // TODO: Don't hard code the index.
-                        (dataTab.model as NetcdfTableModel).readData(ncFile!!, variables)
+                        dataTab.load()
                     }
                 }
             }
@@ -139,105 +169,6 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             window.contentManager.addContent(it)
         }
         return
-    }
-}
-
-
-/**
- * Table data model for netCDF files.
- */
-class NetcdfTableModel : DefaultTableModel() {
-
-    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-
-    /**
-     * Clear table data.
-     */
-    public fun clear() {
-        setDataVector(emptyArray(), emptyArray())
-        return
-    }
-
-    /**
-     * Read a netCDF file schema.
-     * TODO: Make this a row iterator/Sequence and move to Reader class
-     */
-    public fun readSchema(file: NetcdfFile) {
-        clear()
-        setColumnIdentifiers(arrayOf("Variable", "Description", "Units", "Type"))
-        file.variables.forEach {
-            addRow(arrayOf(
-                it.nameAndDimensions,
-                it.description ?: "",
-                it.unitsString ?: "",
-                it.dataType.name,
-            ))
-        }
-        return
-    }
-
-    /**
-     * Read netCDF data variables.
-     * TODO: Make this a row iterator/Sequence and move to Reader class
-     */
-    public fun readData(ncFile: NetcdfFile, variables: Array<Variable>) {
-        // TODO: Handle _FillValue.
-        // TODO: If these variables are already displayed, don't do anything.
-        clear()
-        val dimensionString = variables.getOrNull(0)?.dimensionsString ?: ""
-        if (!variables.all { it.dimensionsString == dimensionString }) {
-            val message = "Selected variables must have the same dimensions"
-            logger.error(message)
-            ErrorDialog("Selected variables must have the same dimensions").showAndGet()
-            return
-        }
-        setColumnIdentifiers(variables.map { it.fullName }.toTypedArray())
-        val dimensions = variables[0].dimensions
-        val labels = mutableListOf("(${dimensions.map { it.fullName }.joinToString(", ")})")
-        assert(labels.addAll(variables.map { it.fullName }))
-        setColumnIdentifiers(labels.toTypedArray())
-        val rowCoords = cartProd(*dimensions.map { (0 until it.length).toList() }.toTypedArray())
-        val rowLabels = cartProd(*dimensions.map { dimensionValues(ncFile, it).toList() }.toTypedArray())
-        rowCoords.zip(rowLabels).withIndex().takeWhile { it.index < 100 }.forEach {
-            val coords = it.value.first.toIntArray()
-            val values = variables.map { variable ->
-                val shape = IntArray(variable.rank) { 1 }
-                variable.read(coords, shape).toString()
-            }
-            val row = mutableListOf("(${it.value.second.joinToString(", ")})")
-            assert(row.addAll(values))
-            addRow(row.toTypedArray())
-        }
-        return
-    }
-
-    /**
-     * Get dimension variable values.
-     *
-     * If there is no matching dimension variable, the values are the dimension
-     * indexes.
-     *
-     * @param ncFile:
-     * @param dimension:
-     * @return
-     */
-    private fun dimensionValues(ncFile: NetcdfFile, dimension: Dimension): Array<String> {
-        val dimensionVar = ncFile.findVariable(dimension.fullName)
-        val values = mutableListOf<String>()
-        if (dimensionVar != null) {
-            if (dimensionVar.rank != 1) {
-                throw RuntimeException("dimension variable does not have rank of 1")
-            }
-            dimensionVar.read().indexIterator.apply {
-                while (hasNext()) {
-                    values.add(objectNext.toString())
-                }
-                // TODO: Convert time variables to string.
-            }
-        } else {
-            values.addAll((0 until dimension.length).map { it.toString() })
-        }
-        return values.toTypedArray()
     }
 }
 
