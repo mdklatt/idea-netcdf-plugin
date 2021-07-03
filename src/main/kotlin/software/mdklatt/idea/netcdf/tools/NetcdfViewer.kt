@@ -114,6 +114,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     inner class DataTab : JBTable(DefaultTableModel()) {
         init {
             emptyText.text = "Select variable(s) in Schema tab"
+            autoCreateRowSorter = true
         }
 
         /**
