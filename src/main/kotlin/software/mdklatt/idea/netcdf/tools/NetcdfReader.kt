@@ -1,20 +1,25 @@
 package software.mdklatt.idea.netcdf.tools
 
 import com.intellij.openapi.diagnostic.Logger
-import com.jetbrains.rd.util.first
-import org.jetbrains.builtInWebServer.validateToken
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
+import ucar.nc2.time.Calendar
+import ucar.nc2.time.CalendarDateUnit
 import vendor.tandrial.itertools.cartProd
-import java.lang.IllegalArgumentException
+
 
 /**
- * Iterate over a subset of netCDF variables.
+ * Read a netCDF file.
  */
 class NetcdfReader() : AutoCloseable {
 
-    public data class DataRecord(val index: Map<String, *>, val data: Map<String, *>)
+    private companion object {
+        internal fun isTime(variable: Variable) : Boolean {
+            val name = variable.fullName.split("/").last()
+            return name.startsWith("time", 0) && variable.dataType.isNumeric
+        }
+    }
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     private var file: NetcdfFile? = null
@@ -67,20 +72,20 @@ class NetcdfReader() : AutoCloseable {
      *
      * @return
      */
-    public fun read(varNames: Iterable<String>): Sequence<DataRecord> {
+    public fun read(varNames: Iterable<String>): Sequence<Map<String, Any>> {
         // TODO: Handle _FillValue.
         val variables = _variables.filterKeys { varNames.contains(it) }.values
         val dimensions = variables.first().dimensions
-        val shape = IntArray(dimensions.size) { 1 }
         val axesCoords = dimensions.map { (0 until it.length) }
         val axesValues = dimensions.map { dimensionValues(it).map {value -> value.toString() }.toList() }
         val expandedCoords = cartProd(*axesCoords.toTypedArray())
         val expandedValues = cartProd(*axesValues.toList().toTypedArray())
         val dimNames = dimensions.map { it.fullName }
+        val shape = IntArray(dimensions.size) { 1 }
         return expandedCoords.zip(expandedValues).map {
             val coords = it.first.toIntArray()
             val values = variables.map { it.read(coords, shape) }
-            DataRecord(dimNames.zip(it.second).toMap(), varNames.zip(values).toMap())
+            dimNames.zip(it.second).toMap() + varNames.zip(values).toMap()
         }.asSequence()
     }
 
@@ -95,17 +100,24 @@ class NetcdfReader() : AutoCloseable {
      */
     private fun dimensionValues(dimension: Dimension): Sequence<*> {
         val variable = file?.findVariable(dimension.fullName)
-        if (variable == null) {
+        if (variable?.isCoordinateVariable != true) {
             return (0 until dimension.length).asSequence()
-        }
-        else if (variable.rank != 1) {
-            throw RuntimeException("${variable.fullName} does not have a rank of 1")
         }
         val values = mutableListOf<Any>()
         variable.read().indexIterator.let {
             // TODO: Turn this into a Sequence without intermediate list.
             while (it.hasNext()) {
                 values.add(it.objectNext)
+            }
+        }
+        if (isTime(variable)) {
+            // Convert numeric times to ISO 8601 strings.
+            // TODO: Convert non-dimension variables as well.
+            val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
+            val timeUnits = CalendarDateUnit.of(calendar, variable.unitsString)
+            values.replaceAll {
+                val offset = it.toString().toDouble()
+                timeUnits.makeCalendarDate(offset).toString()
             }
         }
         return values.asSequence()

@@ -87,7 +87,10 @@ internal class NetcdfReaderTest {
     @Test
     fun testRead() {
         val reader = NetcdfReader(ncPath)
-        val tas = reader.read(varNames).take(2).map { it.data["tas"].toString() }
-        assertEquals(listOf("215.8935 ", "215.80531 "), tas.toList())
+        val records = reader.read(varNames).take(2)
+        val time = records.map { it["time"] }.toList()
+        assertTrue(time.all { it == "2000-05-16T12:00:00Z" })
+        val tas = records.map { it["tas"].toString() }.toList()
+        assertEquals(listOf("215.8935 ", "215.80531 "), tas)
     }
 }
