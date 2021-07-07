@@ -59,6 +59,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                         val file = (accepted as? List<*>)?.get(0) as File
                         reader.open(file.path)
                         load()
+                        varNames = emptyList()
+                        displayedVarNames = emptyList()
                     } catch (_: UnsupportedFlavorException) {
                         JOptionPane.showMessageDialog(null, "Unable to read file")
                     } catch (_: IOException) {
@@ -121,20 +123,24 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
          * Read netCDF data variables.
          */
         internal fun load() {
-            // TODO: Don't do anything if the selected variables are already displayed.
+            if (displayedVarNames.isNotEmpty() && displayedVarNames == varNames) {
+                return  // selected variables are already displayed
+            }
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
             val dimNames = reader.variables[varNames.first()]!!.dimensions.map { it.fullName }
-            model.setColumnIdentifiers((dimNames + varNames).toTypedArray())
-            reader.read(varNames).take(100).forEach {
-                val indexValues = it.index.values.map { it.toString() }
-                val dataValues = it.data.values.map { it.toString() }
-                model.addRow((indexValues + dataValues).toTypedArray())
+            val colNames = dimNames + varNames
+            model.setColumnIdentifiers(colNames.toTypedArray())
+            val maxRows = 100000
+            reader.read(varNames).take(maxRows).forEach {  // TODO: use pagination
+                model.addRow(colNames.map{ key -> it[key].toString() }.toTypedArray())
             }
+            displayedVarNames = varNames
             return
         }
     }
 
+    private var displayedVarNames = emptyList<String>()
     private var reader = NetcdfReader()
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
