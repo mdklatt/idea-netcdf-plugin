@@ -97,13 +97,14 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         private fun load() {
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
-            model.setColumnIdentifiers(arrayOf("Variable", "Description", "Units", "Type"))
+            model.setColumnIdentifiers(arrayOf("Variable", "Description", "Dimensions", "Units", "Type"))
             reader.variables.values.forEach {
                 model.addRow(arrayOf(
-                    it.nameAndDimensions,
+                    it.fullName,
                     it.description,
+                    it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
                     it.unitsString,
-                    it.dataType.name,
+                    it.dataType.name.toLowerCase(),
                 ))
             }
             return
