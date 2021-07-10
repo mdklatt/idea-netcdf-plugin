@@ -79,12 +79,10 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (event == null || selectionModel.isSelectionEmpty) {
                 return
             }
-            varNames = selectedRows.map { reader.variables.keys.toList()[it] }.toList()
-            val dimensionString = reader.variables[varNames.first()]?.dimensionsString
-            if (!varNames.all { reader.variables[it]?.dimensionsString == dimensionString }) {
-                val message = "Selected variables must have the same dimensions"
-                logger.error(message)
-                ErrorDialog(message).showAndGet()
+            varNames = selectedRows.map { reader.schema.keys.toList()[it] }.toList()
+            val dimensionString = reader.schema[varNames.first()]?.get("dimensions")
+            if (!varNames.all { reader.schema[it]?.get("dimensions") == dimensionString }) {
+                ErrorDialog("Selected variables must have the same dimensions").showAndGet()
                 val index = selectionModel.anchorSelectionIndex
                 selectionModel.removeSelectionInterval(index, index)
                 return
@@ -97,14 +95,15 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         private fun load() {
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
-            model.setColumnIdentifiers(arrayOf("Variable", "Description", "Dimensions", "Units", "Type"))
-            reader.variables.values.forEach {
+            val columns = arrayOf("Variable", "Description", "Dimensions", "Units", "Type")
+            model.setColumnIdentifiers(columns)
+            reader.schema.entries.forEach {
                 model.addRow(arrayOf(
-                    it.fullName,
-                    it.description,
-                    it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
-                    it.unitsString,
-                    it.dataType.name.toLowerCase(),
+                    it.key,
+                    it.value["description"],
+                    it.value["dimensions"],
+                    it.value["units"],
+                    it.value["type"],
                 ))
             }
             return
@@ -121,21 +120,18 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         }
 
         /**
-         * Read netCDF data variables.
+         * Load variables from the netCDF file.
          */
         internal fun load() {
             if (displayedVarNames.isNotEmpty() && displayedVarNames == varNames) {
                 return  // selected variables are already displayed
             }
+            reader.setCursor(varNames)
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
-            val dimNames = reader.variables[varNames.first()]!!.dimensions.map { it.fullName }
-            val colNames = dimNames + varNames
-            model.setColumnIdentifiers(colNames.toTypedArray())
-            val maxRows = 100000
-            reader.read(varNames).take(maxRows).forEach {  // TODO: use pagination
-                model.addRow(colNames.map{ key -> it[key].toString() }.toTypedArray())
-            }
+            model.setColumnIdentifiers(reader.columns)
+            val maxRows = 1000  // TODO: use pagination
+            reader.indexes().take(maxRows).forEach { model.addRow(reader.read(it)) }
             displayedVarNames = varNames
             return
         }

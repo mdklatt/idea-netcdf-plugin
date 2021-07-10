@@ -12,24 +12,32 @@ import vendor.tandrial.itertools.cartProd
 /**
  * Read a netCDF file.
  */
-class NetcdfReader() : AutoCloseable {
-
-    private companion object {
-        internal fun isTime(variable: Variable) : Boolean {
-            val name = variable.fullName.split("/").last()
-            return name.startsWith("time", 0) && variable.dataType.isNumeric
-        }
-    }
+internal class NetcdfReader() : AutoCloseable {
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     private var file: NetcdfFile? = null
-    private var _variables = emptyMap<String, Variable>()
+    private var variables = emptyList<Variable>()
+    private var coordinates = emptyMap<String, List<*>>()
+    private var dimsShape = IntArray(0)
+    private var readShape = IntArray(0)
+    private var _columns = emptyArray<String>()
 
-    public val isClosed
+    val isClosed
         get() = file == null
 
-    public val variables
-        get() = _variables
+    val columns: Array<String>
+        get() = _columns
+
+    val schema : Map<String, Map<String, String>>
+        get() = file?.variables?.map {
+            Pair(it.fullName, mapOf(
+                "description" to it.description,
+                "dimensions" to it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
+                "units" to it.unitsString,
+                "type" to it.dataType.name.toLowerCase(),
+            ))
+        }?.toMap() ?: emptyMap()
+
 
     /**
      * Construct an instance from a netCDF file path.
@@ -49,7 +57,6 @@ class NetcdfReader() : AutoCloseable {
             logger.info("Opening netCDF file $path")
             file = NetcdfFile.open(path)
         }
-        _variables = file!!.variables.associateBy { it.fullName }
         return
     }
 
@@ -61,65 +68,100 @@ class NetcdfReader() : AutoCloseable {
     override fun close() {
         file?.close()
         file = null
-        _variables = emptyMap()
-        return
+        variables = emptyList()
     }
 
     /**
-     * Read variable data.
+     * Set the active cursor.
      *
-     * All requested variables should have the same dimensions.
+     * The cursor controls which variables are read from the netCDF dataset.
+     * All selected variables must have congruent dimensions.
      *
-     * @return
+     * @param varNames: variables to read from
      */
-    public fun read(varNames: Iterable<String>): Sequence<Map<String, Any>> {
-        // TODO: Handle _FillValue.
-        val variables = _variables.filterKeys { varNames.contains(it) }.values
-        val dimensions = variables.first().dimensions
-        val axesCoords = dimensions.map { (0 until it.length) }
-        val axesValues = dimensions.map { dimensionValues(it).map {value -> value.toString() }.toList() }
-        val expandedCoords = cartProd(*axesCoords.toTypedArray())
-        val expandedValues = cartProd(*axesValues.toList().toTypedArray())
-        val dimNames = dimensions.map { it.fullName }
-        val shape = IntArray(dimensions.size) { 1 }
-        return expandedCoords.zip(expandedValues).map {
-            val coords = it.first.toIntArray()
-            val values = variables.map { it.read(coords, shape) }
-            dimNames.zip(it.second).toMap() + varNames.zip(values).toMap()
-        }.asSequence()
+    fun setCursor(varNames: Iterable<String>) {
+        variables = varNames.toSet().map {
+            file!!.findVariable(it) ?: throw IllegalArgumentException("unknown variable '${it}'")
+        }
+        val dimensions = variables.firstOrNull()?.dimensions ?: return
+        val dimNames = dimensions.map { it.fullName }.toList()
+        _columns = (dimNames + varNames).toTypedArray()
+        coordinates = dimensions.map { Pair(it.fullName, coordValues(it)) }.toMap()
+        dimsShape = dimensions.map { it.length }.toIntArray()
+        readShape = IntArray(coordinates.size) { 1 }
     }
 
     /**
-     * Get dimension variable values.
+     * Read all cursor variables at a single index.
      *
-     * If there is no matching dimension variable, the values are the dimension
-     * indexes.
-     *
-     * @param dimension: variable dimension
-     * @return dimension values
+     * @return: array of coordinates and variable values
      */
-    private fun dimensionValues(dimension: Dimension): Sequence<*> {
-        val variable = file?.findVariable(dimension.fullName)
+    fun read(index: IntArray): Array<Any?> {
+        val record = coordinates.values.mapIndexed {
+            pos, value -> value[index[pos]]
+        }.toMutableList()
+        variables.forEach {
+            record.add(it.read(index, readShape))
+        }
+        return record.toTypedArray()
+    }
+
+    fun indexes() : Sequence<IntArray> {
+        val axes = dimsShape.map { (0 until it) }.toTypedArray()
+        return cartProd(*axes).map { it.toIntArray() }.asSequence()
+    }
+
+    /**
+     * Get the coordinate values for a dimension.
+     *
+     * The values of the dimension's coordinate variable are used if it exists.
+     * Otherwise, the coordinate values are simply the index positions along
+     * the dimension, i.e. [0, 1,...n).
+     *
+     * @param dimension: dimension to use
+     * @return: coordinate values
+     */
+    private fun coordValues(dimension: Dimension) : List<*> {
+        val variable = file!!.findVariable(dimension.fullName)
         if (variable?.isCoordinateVariable != true) {
-            return (0 until dimension.length).asSequence()
+            return (0 until dimension.length).toList()
         }
-        val values = mutableListOf<Any>()
-        variable.read().indexIterator.let {
-            // TODO: Turn this into a Sequence without intermediate list.
-            while (it.hasNext()) {
-                values.add(it.objectNext)
-            }
+        else if (isTime(variable)) {
+            return timeValues(variable).toList()
         }
-        if (isTime(variable)) {
-            // Convert numeric times to ISO 8601 strings.
-            // TODO: Convert non-dimension variables as well.
-            val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
-            val timeUnits = CalendarDateUnit.of(calendar, variable.unitsString)
-            values.replaceAll {
-                val offset = it.toString().toDouble()
-                timeUnits.makeCalendarDate(offset).toString()
-            }
+        val iter = variable.read().indexIterator
+        return generateSequence {
+            if (iter.hasNext()) iter.objectNext else null
+        }.toList()
+    }
+
+    /**
+     * Convert time variable values to ISO 8601 strings.
+     *
+     * @param variable: time variable
+     * @return: sequence of time strings
+     */
+    private fun timeValues(variable: Variable) : Sequence<String> {
+        val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
+        val units = CalendarDateUnit.of(calendar, variable.unitsString)
+        fun timeValue(value: Any) : String {
+            return units.makeCalendarDate(value.toString().toDouble()).toString()
         }
-        return values.asSequence()
+        val iter = variable.read().indexIterator
+        return generateSequence {
+            if (iter.hasNext()) timeValue(iter.objectNext) else null
+        }
+    }
+
+    /**
+     * Test if a variable appears to be a time variable.
+     *
+     * @param variable: variable to test
+     * @return: true if this appears to be a time variable
+     */
+    private fun isTime(variable: Variable) : Boolean {
+        // TODO: Test units attribute.
+        val name = variable.fullName.split("/").last()
+        return name.startsWith("time", 0) && variable.dataType.isNumeric
     }
 }
