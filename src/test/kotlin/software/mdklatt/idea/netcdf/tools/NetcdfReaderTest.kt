@@ -66,7 +66,7 @@ internal class NetcdfReaderTest {
     }
 
     /**
-     * Test the indexes() method.
+     * Test the indexes property.
      */
     @Test
     fun testIndexes() {
@@ -75,6 +75,17 @@ internal class NetcdfReaderTest {
         val indexes = reader.indexes().toList()
         assertEquals(listOf(0, 0, 0), indexes.first().toList())
         assertEquals(listOf(0, 127, 255), indexes.last().toList())
+    }
+
+    /**
+     * Test the rowCount property.
+     */
+    @Test
+    fun testRowCount() {
+        val reader = NetcdfReader(path)
+        assertEquals(0, reader.rowCount)
+        reader.setCursor(listOf("pr"))
+        assertEquals(32768, reader.rowCount)
     }
 
     /**

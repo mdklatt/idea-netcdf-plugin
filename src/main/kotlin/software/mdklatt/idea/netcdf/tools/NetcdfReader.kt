@@ -42,6 +42,8 @@ internal class NetcdfReader() : AutoCloseable {
             ))
         }?.toMap() ?: emptyMap()
 
+    val rowCount
+        get() = _indexes.size
 
     /**
      * Construct an instance from a netCDF file path.
