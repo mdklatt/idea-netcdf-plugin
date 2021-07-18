@@ -17,6 +17,7 @@ internal class NetcdfReader() : AutoCloseable {
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     private var file: NetcdfFile? = null
     private var variables = emptyList<Variable>()
+    private var dimensions = emptyList<Dimension>()
     private var coordinates = emptyMap<String, List<*>>()
     private var dimsShape = IntArray(0)
     private var readShape = IntArray(0)
@@ -27,7 +28,11 @@ internal class NetcdfReader() : AutoCloseable {
         get() = file == null
 
     val columns: Array<String>
-        get() = _columns
+        get() {
+            val dimNames = dimensions.map { it.fullName }.toList()
+            val varNames = variables.map { it.fullName }.toList()
+            return (dimNames + varNames).toTypedArray()
+        }
 
     val indexes: Sequence<IntArray>
         get() = _indexes.asSequence()
@@ -89,9 +94,7 @@ internal class NetcdfReader() : AutoCloseable {
         variables = varNames.toSet().map {
             file!!.findVariable(it) ?: throw IllegalArgumentException("unknown variable '${it}'")
         }
-        val dimensions = variables.firstOrNull()?.dimensions ?: return
-        val dimNames = dimensions.map { it.fullName }.toList()
-        _columns = (dimNames + varNames).toTypedArray()
+        dimensions = variables.firstOrNull()?.dimensions ?: emptyList()
         coordinates = dimensions.map { Pair(it.fullName, coordValues(it)) }.toMap()
         dimsShape = dimensions.map { it.length }.toIntArray()
         readShape = IntArray(coordinates.size) { 1 }

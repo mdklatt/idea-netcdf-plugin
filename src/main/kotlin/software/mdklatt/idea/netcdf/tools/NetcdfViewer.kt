@@ -130,8 +130,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
             model.setColumnIdentifiers(reader.columns)
-            val maxRows = 1000  // TODO: use pagination
-            reader.indexes().take(maxRows).forEach { model.addRow(reader.read(it)) }
+            val maxRows = 10_000 // TODO: use pagination
+            reader.rows(0, maxRows).forEach { model.addRow(it) }
             displayedVarNames = varNames
             return
         }
