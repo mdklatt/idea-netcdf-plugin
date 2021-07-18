@@ -126,11 +126,11 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (displayedVarNames.isNotEmpty() && displayedVarNames == varNames) {
                 return  // selected variables are already displayed
             }
-            reader.setCursor(varNames)
+            reader.setView(varNames)
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
             model.setColumnIdentifiers(reader.columns)
-            val maxRows = 10_000 // TODO: use pagination
+            val maxRows = 100 // TODO: use pagination
             reader.rows(0, maxRows).forEach { model.addRow(it) }
             displayedVarNames = varNames
             return

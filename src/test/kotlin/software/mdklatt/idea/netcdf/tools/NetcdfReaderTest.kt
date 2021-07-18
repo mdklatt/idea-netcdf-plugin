@@ -66,25 +66,13 @@ internal class NetcdfReaderTest {
     }
 
     /**
-     * Test the indexes property.
-     */
-    @Test
-    fun testIndexes() {
-        val reader = NetcdfReader(path)
-        reader.setCursor(listOf("pr", "tas"))
-        val indexes = reader.indexes().toList()
-        assertEquals(listOf(0, 0, 0), indexes.first().toList())
-        assertEquals(listOf(0, 127, 255), indexes.last().toList())
-    }
-
-    /**
      * Test the rowCount property.
      */
     @Test
     fun testRowCount() {
         val reader = NetcdfReader(path)
         assertEquals(0, reader.rowCount)
-        reader.setCursor(listOf("pr"))
+        reader.setView(listOf("pr"))
         assertEquals(32768, reader.rowCount)
     }
 
@@ -107,24 +95,8 @@ internal class NetcdfReaderTest {
         val columns = listOf("time", "lat", "lon", "pr", "tas")
         val reader = NetcdfReader(path)
         assertTrue(reader.columns.isEmpty())
-        reader.setCursor(listOf("pr", "tas"))
+        reader.setView(listOf("pr", "tas"))
         assertEquals(columns, reader.columns.toList())
-    }
-
-    /**
-     * Test the read() method.
-     */
-    @Test
-    fun testRead() {
-        // TODO: Test higher dimensions.
-        val reader = NetcdfReader(path)
-        reader.setCursor(listOf("pr", "tas"))
-        val indexes = listOf(listOf(0, 0, 0), listOf(0, 0, 1))
-        val records = indexes.map { reader.read(it.toIntArray()) }.toList()
-        val time = records.map { it[0] }.toList()
-        assertTrue(time.all { it == "2000-05-16T12:00:00Z" })
-        val tas = records.map { it[4].toString().toFloat() }.toList()
-        assertEquals(listOf(215.8935f, 215.80531f), tas)
     }
 
     /**
@@ -133,7 +105,8 @@ internal class NetcdfReaderTest {
     @Test
     fun testRows() {
         val reader = NetcdfReader(path)
-        reader.setCursor(listOf("pr", "tas"))
+        assertTrue(reader.rows().toList().isEmpty())
+        reader.setView(listOf("pr", "tas"))
         val rows = reader.rows(1, 3).toList()
         val time = rows.map { it[0] }.toList()
         assertTrue(time.all { it == "2000-05-16T12:00:00Z" })

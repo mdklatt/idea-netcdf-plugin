@@ -16,39 +16,29 @@ internal class NetcdfReader() : AutoCloseable {
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     private var file: NetcdfFile? = null
-    private var variables = emptyList<Variable>()
-    private var dimensions = emptyList<Dimension>()
+    private var variables = emptyMap<String, Variable>()
     private var coordinates = emptyMap<String, List<*>>()
-    private var dimsShape = IntArray(0)
     private var readShape = IntArray(0)
-    private var _columns = emptyArray<String>()
-    private var _indexes = emptyList<IntArray>()
+    private var indexes = emptyList<IntArray>()
 
     val isClosed
         get() = file == null
 
     val columns: Array<String>
-        get() {
-            val dimNames = dimensions.map { it.fullName }.toList()
-            val varNames = variables.map { it.fullName }.toList()
-            return (dimNames + varNames).toTypedArray()
-        }
-
-    val indexes: Sequence<IntArray>
-        get() = _indexes.asSequence()
+        get() = (coordinates.keys + variables.keys).toTypedArray()
 
     val schema : Map<String, Map<String, String>>
-        get() = file?.variables?.map {
+        get() = file?.variables?.associate {
             Pair(it.fullName, mapOf(
-                "description" to it.description,
-                "dimensions" to it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
-                "units" to it.unitsString,
-                "type" to it.dataType.name.toLowerCase(),
+                    "description" to it.description,
+                    "dimensions" to it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
+                    "units" to it.unitsString,
+                    "type" to it.dataType.name.toLowerCase(),
             ))
-        }?.toMap() ?: emptyMap()
+        } ?: emptyMap()
 
     val rowCount
-        get() = _indexes.size
+        get() = indexes.size
 
     /**
      * Construct an instance from a netCDF file path.
@@ -79,46 +69,49 @@ internal class NetcdfReader() : AutoCloseable {
     override fun close() {
         file?.close()
         file = null
-        variables = emptyList()
+        variables = emptyMap()
+        coordinates = emptyMap()
     }
 
     /**
-     * Set the active cursor.
+     * Set the active view.
      *
-     * The cursor controls which variables are read from the netCDF dataset.
-     * All selected variables must have congruent dimensions.
+     * The view controls which variables are read from the netCDF dataset. All
+     * selected variables must have congruent dimensions. Variables that will
+     * be displayed as coordinates will be ignored.
      *
      * @param varNames: variables to read from
      */
-    fun setCursor(varNames: Iterable<String>) {
-        variables = varNames.toSet().map {
-            file!!.findVariable(it) ?: throw IllegalArgumentException("unknown variable '${it}'")
+    fun setView(varNames: Iterable<String>) {
+        variables = varNames.toSet().associate {
+            val variable = file!!.findVariable(it) ?: throw IllegalArgumentException("unknown variable '${it}'")
+            Pair(variable.fullName, variable)
         }
-        dimensions = variables.firstOrNull()?.dimensions ?: emptyList()
-        coordinates = dimensions.map { Pair(it.fullName, coordValues(it)) }.toMap()
-        dimsShape = dimensions.map { it.length }.toIntArray()
+        val dimensions = variables.values.firstOrNull()?.dimensions ?: emptyList()
+        coordinates = dimensions.associate { Pair(it.fullName, coordValues(it)) }
+        val dimsShape = dimensions.map { it.length }.toIntArray()
         readShape = IntArray(coordinates.size) { 1 }
         val axes = dimsShape.map { (0 until it) }.toTypedArray()
-        _indexes = cartProd(*axes).map { it.toIntArray() }.toList()
+        indexes = if (axes.isEmpty()) emptyList() else cartProd(*axes).map { it.toIntArray() }.toList()
     }
 
     /**
-     * Read all cursor variables at a single index.
+     * Read all active variables at a single index.
      *
      * @return: array of coordinates and variable values
      */
-    fun read(index: IntArray): Array<Any?> {
-        val record = coordinates.values.mapIndexed {
+    private fun read(index: IntArray): Array<Any?> {
+        val coordValues = coordinates.values.mapIndexed {
             pos, value -> value[index[pos]]
-        }.toMutableList()
-        variables.forEach {
-            record.add(it.read(index, readShape))
         }
-        return record.toTypedArray()
+        val dataValues = variables.values.map {
+            it.read(index, readShape)
+        }
+        return (coordValues + dataValues).toTypedArray()
     }
 
     /**
-     * Get rows from the current cursor using a flattened index.
+     * Get rows from the current view using a flattened index.
      *
      * @param start: starting index
      * @param end: ending index (exclusive)
@@ -126,7 +119,7 @@ internal class NetcdfReader() : AutoCloseable {
      */
     fun rows(start: Int, end: Int) : Sequence<Array<Any?>> {
         return (start until end).map {
-            read(_indexes[it])
+            read(indexes[it])
         }.asSequence()
     }
 
@@ -134,15 +127,7 @@ internal class NetcdfReader() : AutoCloseable {
      * @overload
      */
     fun rows(start: Int = 0) : Sequence<Array<Any?>> {
-        return rows(start, _indexes.size)
-    }
-
-    /**
-     * Flattened index values for the active cursor.
-     */
-    fun indexes() : Sequence<IntArray> {
-        val axes = dimsShape.map { (0 until it) }.toTypedArray()
-        return cartProd(*axes).map { it.toIntArray() }.asSequence()
+        return rows(start, indexes.size)
     }
 
     /**
