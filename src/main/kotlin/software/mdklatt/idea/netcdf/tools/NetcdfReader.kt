@@ -21,12 +21,16 @@ internal class NetcdfReader() : AutoCloseable {
     private var dimsShape = IntArray(0)
     private var readShape = IntArray(0)
     private var _columns = emptyArray<String>()
+    private var _indexes = emptyList<IntArray>()
 
     val isClosed
         get() = file == null
 
     val columns: Array<String>
         get() = _columns
+
+    val indexes: Sequence<IntArray>
+        get() = _indexes.asSequence()
 
     val schema : Map<String, Map<String, String>>
         get() = file?.variables?.map {
@@ -89,6 +93,8 @@ internal class NetcdfReader() : AutoCloseable {
         coordinates = dimensions.map { Pair(it.fullName, coordValues(it)) }.toMap()
         dimsShape = dimensions.map { it.length }.toIntArray()
         readShape = IntArray(coordinates.size) { 1 }
+        val axes = dimsShape.map { (0 until it) }.toTypedArray()
+        _indexes = cartProd(*axes).map { it.toIntArray() }.toList()
     }
 
     /**
@@ -106,6 +112,29 @@ internal class NetcdfReader() : AutoCloseable {
         return record.toTypedArray()
     }
 
+    /**
+     * Get rows from the current cursor using a flattened index.
+     *
+     * @param start: starting index
+     * @param end: ending index (exclusive)
+     * @return: sequence of select rows
+     */
+    fun rows(start: Int, end: Int) : Sequence<Array<Any?>> {
+        return (start until end).map {
+            read(_indexes[it])
+        }.asSequence()
+    }
+
+    /**
+     * @overload
+     */
+    fun rows(start: Int = 0) : Sequence<Array<Any?>> {
+        return rows(start, _indexes.size)
+    }
+
+    /**
+     * Flattened index values for the active cursor.
+     */
     fun indexes() : Sequence<IntArray> {
         val axes = dimsShape.map { (0 until it) }.toTypedArray()
         return cartProd(*axes).map { it.toIntArray() }.asSequence()

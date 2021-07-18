@@ -66,10 +66,10 @@ internal class NetcdfReaderTest {
     }
 
     /**
-     * Test the index() method.
+     * Test the indexes() method.
      */
     @Test
-    fun testIndex() {
+    fun testIndexes() {
         val reader = NetcdfReader(path)
         reader.setCursor(listOf("pr", "tas"))
         val indexes = reader.indexes().toList()
@@ -114,5 +114,19 @@ internal class NetcdfReaderTest {
         assertTrue(time.all { it == "2000-05-16T12:00:00Z" })
         val tas = records.map { it[4].toString().toFloat() }.toList()
         assertEquals(listOf(215.8935f, 215.80531f), tas)
+    }
+
+    /**
+     * Test the rows() method.
+     */
+    @Test
+    fun testRows() {
+        val reader = NetcdfReader(path)
+        reader.setCursor(listOf("pr", "tas"))
+        val rows = reader.rows(1, 3).toList()
+        val time = rows.map { it[0] }.toList()
+        assertTrue(time.all { it == "2000-05-16T12:00:00Z" })
+        val tas = rows.map { it[4].toString().toFloat() }.toList()
+        assertEquals(listOf(215.80531f, 215.73935f), tas)
     }
 }
