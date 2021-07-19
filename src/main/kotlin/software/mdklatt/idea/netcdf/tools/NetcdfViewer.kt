@@ -15,6 +15,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
+import java.awt.Font
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.dnd.DnDConstants
@@ -24,6 +25,7 @@ import java.io.File
 import java.io.IOException
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
+import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
 
@@ -133,6 +135,27 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             val maxRows = 100 // TODO: use pagination
             reader.rows(0, maxRows).forEach { model.addRow(it) }
             displayedVarNames = varNames
+            formatColumns()
+            return
+        }
+
+        /**
+         * Set column formatting.
+         */
+        private fun formatColumns() {
+            if (reader.columns.isEmpty()) {
+                return
+            }
+            reader.columns.filterNot { varNames.contains(it) }.forEach {
+                // Add custom renderer to each coordinate column.
+                val column = columnModel.getColumn(reader.columns.indexOf(it))
+                column.headerRenderer = object: DefaultTableCellRenderer() {
+                    // Set column labels to bold.
+                    override fun setFont(font: Font?) {
+                        super.setFont(font?.deriveFont(Font.BOLD))
+                    }
+                }
+            }
             return
         }
     }
@@ -198,4 +221,9 @@ private class ErrorDialog(private val message: String) : DialogWrapper(false) {
             row(message) {}
         }
     }
+}
+
+
+private class BoldCellRenderer : DefaultTableCellRenderer() {
+
 }
