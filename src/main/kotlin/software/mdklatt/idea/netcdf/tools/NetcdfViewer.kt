@@ -108,6 +108,22 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                     it.value["type"],
                 ))
             }
+            formatColumns()
+            return
+        }
+
+        /**
+         * Set column formatting.
+         */
+        private fun formatColumns() {
+            columnModel.columns.asSequence().forEach() {
+                it.headerRenderer = object: DefaultTableCellRenderer() {
+                    // Set column labels to bold.
+                    override fun setFont(font: Font?) {
+                        super.setFont(font?.deriveFont(Font.BOLD))
+                    }
+                }
+            }
             return
         }
     }
@@ -125,14 +141,14 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
          * Load variables from the netCDF file.
          */
         internal fun load() {
-            if (displayedVarNames.isNotEmpty() && displayedVarNames == varNames) {
+            if (displayedVarNames == varNames) {
                 return  // selected variables are already displayed
             }
             reader.setView(varNames)
             val model = this.model as DefaultTableModel
             model.setDataVector(emptyArray(), emptyArray())
             model.setColumnIdentifiers(reader.columns)
-            val maxRows = 100 // TODO: use pagination
+            val maxRows = 100_000 // TODO: use pagination
             reader.rows(0, maxRows).forEach { model.addRow(it) }
             displayedVarNames = varNames
             formatColumns()
@@ -143,16 +159,24 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
          * Set column formatting.
          */
         private fun formatColumns() {
-            if (reader.columns.isEmpty()) {
-                return
-            }
-            reader.columns.filterNot { varNames.contains(it) }.forEach {
-                // Add custom renderer to each coordinate column.
-                val column = columnModel.getColumn(reader.columns.indexOf(it))
-                column.headerRenderer = object: DefaultTableCellRenderer() {
-                    // Set column labels to bold.
+            columnModel.columns.asSequence().forEach() {
+                var headerStyle = Font.BOLD
+                var cellStyle = Font.PLAIN
+                if (!varNames.contains(it.headerValue)) {
+                    // Add italics to coordinate columns.
+                    headerStyle = headerStyle or Font.ITALIC
+                    cellStyle = cellStyle or Font.ITALIC
+                }
+                it.headerRenderer = object: DefaultTableCellRenderer() {
+                    // Set header style.
                     override fun setFont(font: Font?) {
-                        super.setFont(font?.deriveFont(Font.BOLD))
+                        super.setFont(font?.deriveFont(headerStyle))
+                    }
+                }
+                it.cellRenderer = object: DefaultTableCellRenderer() {
+                    // Set regular cell style.
+                    override fun setFont(font: Font?) {
+                        super.setFont(font?.deriveFont(cellStyle))
                     }
                 }
             }
