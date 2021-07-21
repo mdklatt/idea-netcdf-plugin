@@ -1,6 +1,7 @@
 package software.mdklatt.idea.netcdf.tools
 
 import com.intellij.openapi.diagnostic.Logger
+import kotlin.math.min
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
@@ -118,7 +119,7 @@ internal class NetcdfReader() : AutoCloseable {
      * @return: sequence of select rows
      */
     fun rows(start: Int, end: Int) : Sequence<Array<Any?>> {
-        return (start until end).map {
+        return (start until min(end, rowCount)).map {
             read(indexes[it])
         }.asSequence()
     }
