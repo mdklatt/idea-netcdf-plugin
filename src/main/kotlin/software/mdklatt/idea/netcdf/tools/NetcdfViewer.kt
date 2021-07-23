@@ -15,7 +15,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
-import ucar.ma2.DataType
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
@@ -34,7 +33,6 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
-import javax.swing.table.DefaultTableModel
 
 
 /**
@@ -45,7 +43,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     /**
      * File schema content.
      */
-    inner class SchemaTab : JBTable(DefaultTableModel()) {
+    inner class SchemaTab : JBTable(SchemaTableModel()) {
         private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
 
         init {
@@ -70,14 +68,13 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                         val file = (accepted as? List<*>)?.get(0) as File
                         ncFile?.close()
                         ncFile = NetcdfFile.open(file.path)
-                        reader.open(file.path)
                         load()
                         varNames = emptyList()
                         displayedVarNames = emptyList()
                     } catch (_: UnsupportedFlavorException) {
                         JOptionPane.showMessageDialog(null, "Unable to read file")
                     } catch (_: IOException) {
-                        JOptionPane.showMessageDialog(null, "Unable to read file")
+                        JOptionPane.showMessageDialog(null, "Could not open netCDF file")
                     }
                     return
                 }
@@ -92,33 +89,22 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (event == null || selectionModel.isSelectionEmpty) {
                 return
             }
-            varNames = selectedRows.map { reader.schema.keys.toList()[it] }.toList()
-            val dimensionString = reader.schema[varNames.first()]?.get("dimensions")
-            if (!varNames.all { reader.schema[it]?.get("dimensions") == dimensionString }) {
+            val model = this.model as SchemaTableModel
+            val dimensions = selectedRows.map { model.getValueAt(it, 2) }.toSet()
+            if (dimensions.size > 1) {
                 ErrorDialog("Selected variables must have the same dimensions").showAndGet()
                 val index = selectionModel.anchorSelectionIndex
                 selectionModel.removeSelectionInterval(index, index)
                 return
             }
+            varNames = selectedRows.map { model.getValueAt(it, 0) }.toList()
         }
 
         /**
          * Load data for display.
          */
         private fun load() {
-            val model = this.model as DefaultTableModel
-            model.setDataVector(emptyArray(), emptyArray())
-            val columns = arrayOf("Variable", "Description", "Dimensions", "Units", "Type")
-            model.setColumnIdentifiers(columns)
-            reader.schema.entries.forEach {
-                model.addRow(arrayOf(
-                    it.key,
-                    it.value["description"],
-                    it.value["dimensions"],
-                    it.value["units"],
-                    it.value["type"],
-                ))
-            }
+            (model as SchemaTableModel).setData(ncFile!!)
             formatColumns()
             return
         }
@@ -155,8 +141,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             if (displayedVarNames == varNames) {
                 return  // selected variables are already displayed
             }
-            val model = this.model as DataTableModel
-            model.setData(ncFile!!, varNames.asSequence())
+            (model as DataTableModel).setData(ncFile!!, varNames.asSequence())
             displayedVarNames = varNames
             formatColumns()
             return
@@ -191,12 +176,11 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         }
     }
 
-    private var displayedVarNames = emptyList<String>()
-    private var reader = NetcdfReader()
     private var ncFile: NetcdfFile? = null
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
     private var varNames = emptyList<String>()
+    private var displayedVarNames = emptyList<String>()
 
 
     /**
@@ -348,11 +332,11 @@ internal class DataTableModel() : AbstractTableModel() {
      */
     override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
         return if (columnIndex < coordinates.size) {
-            // Coordinate columns.
+            // Select a coordinate column.
             val coordIndex = indexes[rowIndex][columnIndex]
             coordinates[columnIndex][coordIndex] ?: throw IllegalStateException("Unexpected null value")
         } else {
-            // Data columns.
+            // Select a data column.
             val variableIndex = columnIndex - coordinates.size
             variables[variableIndex].read(indexes[rowIndex], readShape).getObject(0)
         }
@@ -370,6 +354,7 @@ internal class DataTableModel() : AbstractTableModel() {
      */
     fun setData(file: NetcdfFile, varNames: Sequence<String>) {
         // TODO: Verify that all variables have the same dimensions.
+        logger.debug("Loading data from ${file.location}")
         variables = varNames.map {
             file.findVariable(it) ?: throw IllegalArgumentException("Unknown variable: '${it}'")
         }.toList()
@@ -405,5 +390,81 @@ internal class DataTableModel() : AbstractTableModel() {
             val iter = variable.read().indexIterator
             generateSequence { if (iter.hasNext()) iter.objectNext else null }
         }
+    }
+}
+
+
+/**
+ * Table model for a netCDF file schema.
+ */
+internal class SchemaTableModel() : AbstractTableModel() {
+
+    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
+    private val labels = arrayOf("Variable", "Description", "Dimensions", "Units", "Type")
+    private var schema = emptyList<Array<String>>()
+
+    /**
+     * Returns the number of rows in the model. A
+     * `JTable` uses this method to determine how many rows it
+     * should display.  This method should be quick, as it
+     * is called frequently during rendering.
+     *
+     * @return the number of rows in the model
+     * @see .getColumnCount
+     */
+    override fun getRowCount() = schema.size
+
+    /**
+     * Returns the number of columns in the model. A
+     * `JTable` uses this method to determine how many columns it
+     * should create and display by default.
+     *
+     * @return the number of columns in the model
+     * @see .getRowCount
+     */
+    override fun getColumnCount() = labels.size
+
+
+    /**
+     *
+     */
+    override fun getColumnClass(columnIndex: Int): Class<*> {
+        return schema[columnIndex].firstOrNull()?.javaClass ?: throw IllegalArgumentException("Empty data model")
+    }
+
+    /**
+     * Get the name label for a column.
+     */
+    override fun getColumnName(column: Int) = labels[column]
+
+    /**
+     * Returns the value for the cell at `columnIndex` and
+     * `rowIndex`.
+     *
+     * @param   rowIndex        the row whose value is to be queried
+     * @param   columnIndex     the column whose value is to be queried
+     * @return  the value Object at the specified cell
+     */
+    override fun getValueAt(rowIndex: Int, columnIndex: Int) = schema[rowIndex][columnIndex]
+
+    /**
+     * Set model data.
+     *
+     * The model defines columns consisting of variable metadata fields.
+     *
+     * @param file: open netCDF file
+     */
+    fun setData(file: NetcdfFile) {
+        logger.debug("Loading schema from ${file.location}")
+        schema = file.variables.map {
+            arrayOf(
+                it.fullNameEscaped,
+                it.description,
+                it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
+                it.unitsString,
+                it.dataType.name.toLowerCase(),
+            )
+        }.toList()
+        fireTableStructureChanged()
     }
 }
