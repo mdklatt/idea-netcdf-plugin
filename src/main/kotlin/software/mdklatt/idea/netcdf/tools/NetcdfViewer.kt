@@ -69,8 +69,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                         ncFile?.close()
                         ncFile = NetcdfFile.open(file.path)
                         load()
-                        varNames = emptyList()
-                        displayedVarNames = emptyList()
+                        selectedVars = emptyList()
+                        displayedVars = emptyList()
                     } catch (_: UnsupportedFlavorException) {
                         JOptionPane.showMessageDialog(null, "Unable to read file")
                     } catch (_: IOException) {
@@ -97,7 +97,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                 selectionModel.removeSelectionInterval(index, index)
                 return
             }
-            varNames = selectedRows.map { model.getValueAt(it, 0) }.toList()
+            selectedVars = selectedRows.map { model.getValueAt(it, 0) }.toList()
         }
 
         /**
@@ -138,11 +138,11 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
          * Load variables from the netCDF file.
          */
         internal fun load() {
-            if (displayedVarNames == varNames) {
+            if (displayedVars == selectedVars) {
                 return  // selected variables are already displayed
             }
-            (model as DataTableModel).setData(ncFile!!, varNames.asSequence())
-            displayedVarNames = varNames
+            (model as DataTableModel).setData(ncFile!!, selectedVars.asSequence())
+            displayedVars = selectedVars
             formatColumns()
             return
         }
@@ -154,7 +154,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             columnModel.columns.asSequence().forEach() {
                 var headerStyle = Font.BOLD
                 var cellStyle = Font.PLAIN
-                if (!varNames.contains(it.headerValue)) {
+                if (!selectedVars.contains(it.headerValue)) {
                     // Add italics to coordinate columns.
                     headerStyle = headerStyle or Font.ITALIC
                     cellStyle = cellStyle or Font.ITALIC
@@ -179,8 +179,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     private var ncFile: NetcdfFile? = null
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
-    private var varNames = emptyList<String>()
-    private var displayedVarNames = emptyList<String>()
+    private var selectedVars = emptyList<String>()
+    private var displayedVars = emptyList<String>()
 
 
     /**
@@ -242,38 +242,6 @@ private class ErrorDialog(private val message: String) : DialogWrapper(false) {
 
 
 internal class DataTableModel() : AbstractTableModel() {
-
-    companion object {
-        /**
-         * Test if a variable appears to be a time variable.
-         *
-         * @param variable: variable to test
-         * @return: true if this appears to be a time variable
-         */
-        private fun isTime(variable: Variable) : Boolean {
-            // TODO: Test units attribute.
-            val name = variable.fullNameEscaped.split("/").last()
-            return name.startsWith("time", 0) && variable.dataType.isNumeric
-        }
-
-        /**
-         * Convert time variable values to ISO 8601 strings.
-         *
-         * @param variable: time variable
-         * @return: sequence of time strings
-         */
-        private fun timeValues(variable: Variable) : Sequence<String> {
-            val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
-            val units = CalendarDateUnit.of(calendar, variable.unitsString)
-            fun timeValue(value: Any) : String {
-                return units.makeCalendarDate(value.toString().toDouble()).toString()
-            }
-            val iter = variable.read().indexIterator
-            return generateSequence {
-                if (iter.hasNext()) timeValue(iter.objectNext) else null
-            }
-        }
-    }
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     private var indexes = emptyList<IntArray>()
@@ -359,8 +327,7 @@ internal class DataTableModel() : AbstractTableModel() {
             file.findVariable(it) ?: throw IllegalArgumentException("Unknown variable: '${it}'")
         }.toList()
         val dimensions = variables.firstOrNull()?.dimensions ?: emptyList()
-        val dimsShape = dimensions.map { it.length }.toIntArray()
-        val axes = dimsShape.map { (0 until it) }.toTypedArray()
+        val axes = dimensions.map { (0 until it.length) }.toTypedArray()
         indexes = if (axes.isEmpty()) emptyList() else cartProd(*axes).map { it.toIntArray() }.toList()
         coordinates = dimensions.map { getCoordinates(file, it).toList() }
         readShape = IntArray(coordinates.size) { 1 }
@@ -468,3 +435,36 @@ internal class SchemaTableModel() : AbstractTableModel() {
         fireTableStructureChanged()
     }
 }
+
+
+/**
+ * Test if a netCDF variable appears to be a time variable.
+ *
+ * @param variable: variable to test
+ * @return: true if this appears to be a time variable
+ */
+private fun isTime(variable: Variable) : Boolean {
+    // TODO: Test units attribute.
+    val name = variable.fullNameEscaped.split("/").last()
+    return name.startsWith("time", 0) && variable.dataType.isNumeric
+}
+
+
+/**
+ * Convert netCDF time variable values to ISO 8601 strings.
+ *
+ * @param variable: time variable
+ * @return: sequence of time strings
+ */
+private fun timeValues(variable: Variable) : Sequence<String> {
+    val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
+    val units = CalendarDateUnit.of(calendar, variable.unitsString)
+    fun timeValue(value: Any) : String {
+        return units.makeCalendarDate(value.toString().toDouble()).toString()
+    }
+    val iter = variable.read().indexIterator
+    return generateSequence {
+        if (iter.hasNext()) timeValue(iter.objectNext) else null
+    }
+}
+
