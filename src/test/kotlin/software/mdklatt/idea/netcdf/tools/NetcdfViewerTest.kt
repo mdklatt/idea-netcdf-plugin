@@ -95,6 +95,7 @@ internal class DataTableModelTest {
      */
     @Test
     fun testGetCellValueAt() {
+        // TODO: Add test for fixed-length strings.
         model.setData(file, sequenceOf("pr", "tas"))
         assertEquals("2000-05-16T12:00:00Z", model.getValueAt(0, 0))
         assertEquals(215.73935f, model.getValueAt(2, 4))

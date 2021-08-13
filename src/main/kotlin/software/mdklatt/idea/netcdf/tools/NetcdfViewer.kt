@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.*
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -232,7 +233,7 @@ private class ErrorDialog(private val message: String) : DialogWrapper(false) {
      *
      * @return: dialog contents
      */
-    protected override fun createCenterPanel(): JComponent {
+    override fun createCenterPanel(): JComponent {
         // https://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html
         return panel {
             row(message) {}
@@ -351,6 +352,8 @@ internal class DataTableModel() : AbstractTableModel() {
         return if (variable?.isCoordinateVariable != true) {
             // No coordinate variable, use index values.
             (0 until dimension.length).asSequence()
+        } else if (isFixedString(variable)) {
+            fixedStringValues(variable)
         } else if (isTime(variable)) {
             timeValues(variable)
         } else {
@@ -434,6 +437,25 @@ internal class SchemaTableModel() : AbstractTableModel() {
         }.toList()
         fireTableStructureChanged()
     }
+}
+
+
+/**
+ * Test if a netCDF variable appears to be a fixed-length string.
+ */
+private fun isFixedString(variable: Variable) = variable.dataType.name.toLowerCase() == "char" && variable.shape.size == 2
+
+
+/**
+ * Convert fixed-length string variable values to Strings.
+ */
+private fun fixedStringValues(variable: Variable) : Sequence<String> {
+    val (size, strlen) = variable.shape
+    val shape = intArrayOf(1, strlen)
+    return (0 until size).map {
+        val origin = intArrayOf(it, 0)
+        variable.read(origin, shape).toString()
+    }.asSequence()
 }
 
 
