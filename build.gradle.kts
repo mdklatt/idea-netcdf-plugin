@@ -12,8 +12,8 @@ plugins {
     id("org.jetbrains.changelog") version "1.1.2"
 }
 
-val group = properties("pluginGroup")
-val version = properties("pluginVersion")
+group = properties("pluginGroup")
+version = properties("pluginVersion")
 
 
 // Configure project's dependencies
