@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.*
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -352,9 +351,9 @@ internal class DataTableModel() : AbstractTableModel() {
         return if (variable?.isCoordinateVariable != true) {
             // No coordinate variable, use index values.
             (0 until dimension.length).asSequence()
-        } else if (isFixedString(variable)) {
-            fixedStringValues(variable)
-        } else if (isTime(variable)) {
+        } else if (variable.isArrayString) {
+            arrayStringValues(variable)
+        } else if (variable.isTime) {
             timeValues(variable)
         } else {
             val iter = variable.read().indexIterator
@@ -441,34 +440,44 @@ internal class SchemaTableModel() : AbstractTableModel() {
 
 
 /**
- * Test if a netCDF variable appears to be a fixed-length string.
+ * True if variable appears to be a character array string.
+ *
+ * Prior to netCDF4, strings had to be stored as a 2D CHAR array where the
+ * second dimension extends along the length of each string.
+ *
+ * @see <a href=http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_58.html>Reading and Writing Character String Values</a>
  */
-private fun isFixedString(variable: Variable) = variable.dataType.name.toLowerCase() == "char" && variable.shape.size == 2
+private val Variable.isArrayString: Boolean
+    get() = dataType.name.toLowerCase() == "char" && shape.size == 2
+
+
+/**
+ * True if variable appears to be a time variable.
+ *
+ * This variable is assumed to contain time values if it adheres to netCDF time
+ * conventions, namely that it is a numeric variable whose name starts with
+ * 'time' and has a 'units' attribute of the form '<units> since <timestamp>'
+ *
+ * @see <a href="https://www.unidata.ucar.edu/software/netcdf/time/recs.html">A Brief History of (netCDF) Time<a>
+ */
+private val Variable.isTime : Boolean
+    get() {
+        val name = fullNameEscaped.split("/").last()
+        val regex = CalendarDateUnit.udunitPatternString.toRegex()
+        return name.startsWith("time", 0) && dataType.isNumeric && regex.matches(unitsString.toLowerCase())
+    }
 
 
 /**
  * Convert fixed-length string variable values to Strings.
  */
-private fun fixedStringValues(variable: Variable) : Sequence<String> {
+private fun arrayStringValues(variable: Variable) : Sequence<String> {
     val (size, strlen) = variable.shape
     val shape = intArrayOf(1, strlen)
     return (0 until size).map {
         val origin = intArrayOf(it, 0)
         variable.read(origin, shape).toString()
     }.asSequence()
-}
-
-
-/**
- * Test if a netCDF variable appears to be a time variable.
- *
- * @param variable: variable to test
- * @return: true if this appears to be a time variable
- */
-private fun isTime(variable: Variable) : Boolean {
-    // TODO: Test units attribute.
-    val name = variable.fullNameEscaped.split("/").last()
-    return name.startsWith("time", 0) && variable.dataType.isNumeric
 }
 
 
@@ -489,4 +498,3 @@ private fun timeValues(variable: Variable) : Sequence<String> {
         if (iter.hasNext()) timeValue(iter.objectNext) else null
     }
 }
-
