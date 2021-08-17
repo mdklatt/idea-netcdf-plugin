@@ -28,6 +28,7 @@ dependencies {
     implementation("edu.ucar:netcdf4:5.1.0")
     implementation("org.slf4j:slf4j-jdk14:1.7.30")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
     testImplementation("org.junit.vintage:junit-vintage-engine:5.7.0")
 }
 
