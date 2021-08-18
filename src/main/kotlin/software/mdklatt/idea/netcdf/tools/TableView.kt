@@ -43,7 +43,7 @@ internal class TableView(private var file: NetcdfFile) {
         /**
          * Mapping of variable axes to table axes.
          */
-        private val axes: IntArray = variable.dimensions.map {
+        private val axes: IntArray = variable.publicDimensions.map {
             val index = dimensions.indexOf(it)
             if (index != -1) index else throw IllegalStateException("incompatible dimensions")
         }.toIntArray()
@@ -150,7 +150,7 @@ internal class TableView(private var file: NetcdfFile) {
         }
         val variable = file.findVariable(name) ?: throw IllegalArgumentException("unknown variable: $name")
         if (dimensions.isEmpty()) {
-            dimensions = variable.dimensions
+            dimensions = variable.publicDimensions
             dimensions.forEach { addCoordinateColumn(it) }
             val shape = dimensions.map { (0 until it.length) }.toTypedArray()
             index = if (shape.isEmpty()) emptyList() else cartProd(*shape).map { it.toIntArray() }.toList()
@@ -206,8 +206,7 @@ internal class TableView(private var file: NetcdfFile) {
      * @return: true if the variable is compatible
      */
     private fun congruent(variable: Variable) : Boolean {
-        // TODO: Fix for "classic" strings which have extra length dimension
-        return setOf(dimensions) == setOf(variable.dimensions)
+        return setOf(dimensions) == setOf(variable.publicDimensions)
     }
 
     /**
@@ -276,4 +275,14 @@ private val Variable.isTime : Boolean
         val name = fullNameEscaped.split("/").last()
         val regex = CalendarDateUnit.udunitPatternString.toRegex()
         return name.startsWith("time", 0) && dataType.isNumeric && regex.matches(unitsString.toLowerCase())
+    }
+
+
+/**
+ * Variable dimensions excluding "private" dimensions, e.g. the length
+ * dimension of character array string.
+ */
+private val Variable.publicDimensions : List<Dimension>
+    get() {
+        return if (isArrayString) dimensions.dropLast(1) else dimensions
     }
