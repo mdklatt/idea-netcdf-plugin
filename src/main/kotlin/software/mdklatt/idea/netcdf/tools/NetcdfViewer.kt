@@ -15,7 +15,8 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
-import ucar.nc2.NetcdfFile
+import com.intellij.ui.treeStructure.Tree
+import ucar.nc2.*
 import java.awt.Font
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -28,6 +29,10 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
+import kotlin.sequences.Sequence
 
 
 /**
@@ -171,9 +176,97 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         }
     }
 
+    /**
+     * File schema tree view (experimental).
+     */
+    inner class TreeTab : Tree() {
+
+        private var root: DefaultMutableTreeNode? = null
+
+        init {
+            emptyText.text = "Drop netCDF file in Schema tab to open"
+        }
+
+        internal fun load() {
+            // TODO: Load schema from ncFile.
+            root = DefaultMutableTreeNode(ncFile!!.location).also {
+                model = DefaultTreeModel(it)
+                addGroup(it, ncFile!!.rootGroup)
+                expandPath(TreePath(it))
+            }
+        }
+
+        private fun addGroup(head: DefaultMutableTreeNode, group: Group) {
+            val node : DefaultMutableTreeNode
+            if (group.isRoot) {
+                node = head
+            } else {
+                node = DefaultMutableTreeNode(group.fullNameEscaped)
+                head.add(node)
+            }
+            addAttributes(node, group.attributes)
+            addDimensions(node, group.dimensions)
+            addVariables(node, group.variables)
+            if (group.groups.isNotEmpty()) {
+                DefaultMutableTreeNode("Groups").let {
+                    node.add(it)
+                    group.groups.forEach { sub-> addGroup(it, sub) }
+                }
+            }
+            return
+        }
+
+        private fun addVariables(head: DefaultMutableTreeNode, items: List<Variable>) {
+            if (items.isEmpty()) {
+                return
+            }
+            DefaultMutableTreeNode("Variables").let { node ->
+                head.add(node)
+                items.forEach {
+                    DefaultMutableTreeNode(it.fullNameEscaped).apply {
+                        node.add(this)
+                        addAttributes(this, it.attributes)
+                        addDimensions(this, it.dimensions)
+                    }
+                }
+            }
+            return
+        }
+
+        private fun addAttributes(head: DefaultMutableTreeNode, items: List<Attribute>) {
+            if (items.isEmpty()) {
+                return
+            }
+            DefaultMutableTreeNode("Attributes").let { node ->
+                head.add(node)
+                items.forEach {
+                    val text = "${it.fullNameEscaped}: ${it.stringValue}"
+                    node.add(DefaultMutableTreeNode(text))
+                }
+            }
+            return
+        }
+
+        private fun addDimensions(head: DefaultMutableTreeNode, items: List<Dimension>) {
+            if (items.isEmpty()) {
+                return
+            }
+            DefaultMutableTreeNode("Dimensions").let { node ->
+                head.add(node)
+                items.forEach {
+                    // TODO: Add shape and unlimited.
+                    node.add(DefaultMutableTreeNode(it.fullNameEscaped))
+                }
+            }
+            return
+        }
+    }
+
+
     private var ncFile: NetcdfFile? = null
     private var schemaTab = SchemaTab()
     private var dataTab = DataTab()
+    private var treeTab = TreeTab()
     private var selectedVars = emptyList<String>()
     private var displayedVars = emptyList<String>()
 
@@ -188,22 +281,32 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         window.addContentManagerListener(object : ContentManagerListener {
             override fun selectionChanged(event: ContentManagerEvent) {
                 super.selectionChanged(event)
-                event.let {
+                event.also {
+                    // TODO: This should be a loop.
                     if (it.index == 1 && it.operation.name == "add") {
                         // Data tab is selected, load data.
                         // TODO: Don't hard code the index.
                         dataTab.load()
                     }
+                    else if (it.index == 2 && it.operation.name == "add") {
+                        // Tree tab is selected, load data.
+                        // TODO: Don't hard code the index.
+                        treeTab.load()
+                    }
                 }
             }
         })
         val factory = window.contentManager.factory
-        factory.createContent(JBScrollPane(schemaTab), "Schema", false).let {
+        factory.createContent(JBScrollPane(schemaTab), "Schema", false).also {
             it.description = "File schema"
             window.contentManager.addContent(it)
         }
-        factory.createContent(JBScrollPane(dataTab), "Data", false).let {
+        factory.createContent(JBScrollPane(dataTab), "Data", false).also {
             it.description = "Selected variables"
+            window.contentManager.addContent(it)
+        }
+        factory.createContent(JBScrollPane(treeTab), "Tree", false).also {
+            it.description = "File schema (experimental tree view)"
             window.contentManager.addContent(it)
         }
         window.contentManager
