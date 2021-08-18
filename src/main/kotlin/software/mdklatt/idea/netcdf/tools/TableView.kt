@@ -147,9 +147,6 @@ internal class TableView(private var file: NetcdfFile) {
      * @param name: fully-escaped variable name
      */
     fun add(name: String) {
-        if (columns.find { it.label == name } != null) {
-            return  // column already exists
-        }
         val variable = file.findVariable(name) ?: throw IllegalArgumentException("unknown variable: $name")
         if (dimensions.isEmpty()) {
             dimensions = variable.publicDimensions
@@ -157,15 +154,19 @@ internal class TableView(private var file: NetcdfFile) {
             val shape = dimensions.map { (0 until it.length) }.toTypedArray()
             index = if (shape.isEmpty()) emptyList() else cartProd(*shape).map { it.toIntArray() }.toList()
         } else if (!congruent(variable)) {
-            throw IllegalArgumentException("cannot add incongruent variable $name to table")
+            throw IllegalArgumentException("cannot add incongruent variable '${name}' to table")
         }
-        addVariableColumn(variable)
+        if (columns.find { it.label == name } == null) {
+            // Exclude duplicates, including variables that are already present
+            // as coordinate variables.
+            addVariableColumn(variable)
+        }
         return
     }
 
     /** @overload */
     fun add(names: Sequence<String>) {
-        names.forEach { add(it) }
+        names.toSet().forEach { add(it) }
         return
     }
 
