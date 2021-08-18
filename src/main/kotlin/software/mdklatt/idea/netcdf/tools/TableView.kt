@@ -1,12 +1,15 @@
 package software.mdklatt.idea.netcdf.tools
 
+import software.mdklatt.idea.netcdf.dateUnits
+import software.mdklatt.idea.netcdf.isArrayString
+import software.mdklatt.idea.netcdf.isTime
+import software.mdklatt.idea.netcdf.publicDimensions
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
-import ucar.nc2.time.Calendar
-import ucar.nc2.time.CalendarDateUnit
 import vendor.tandrial.itertools.cartProd
 import java.lang.IllegalStateException
+
 
 /**
  * Represent n-dimensional netCDF variables as a two-dimensional table where
@@ -108,8 +111,7 @@ internal class TableView(private var file: NetcdfFile) {
         /** @see VariableColumn.type */
         override val type = String::class.java
 
-        private val calendar = variable.findAttribute("calendar")?.stringValue ?: Calendar.getDefault().name
-        private val units = CalendarDateUnit.of(calendar, variable.unitsString)
+        private val units = variable.dateUnits ?: throw IllegalStateException("not a valid time variable")
 
         /** @see VariableColumn.read */
         override fun value(row: Int) : Any {
@@ -249,40 +251,3 @@ internal class TableView(private var file: NetcdfFile) {
         columns.add(column)
     }
 }
-
-
-/**
- * True if variable appears to be a character array string. Prior to netCDF4,
- * strings had to be stored as a 2D CHAR array where the second dimension
- * extends along the length of each string.
- *
- * @see <a href=http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_58.html>Reading and Writing Character String Values</a>
- */
-private val Variable.isArrayString: Boolean
-    get() = dataType.name.toLowerCase() == "char" && shape.size == 2
-
-
-/**
- * True if variable appears to be a time variable. The variable is assumed to
- * contain time values if it adheres to netCDF time conventions, namely that it
- * is a numeric variable whose name starts with 'time' and has a 'units'
- * attribute of the form '<units> since <timestamp>'
- *
- * @see <a href="https://www.unidata.ucar.edu/software/netcdf/time/recs.html">A Brief History of (netCDF) Time<a>
- */
-private val Variable.isTime : Boolean
-    get() {
-        val name = fullNameEscaped.split("/").last()
-        val regex = CalendarDateUnit.udunitPatternString.toRegex()
-        return name.startsWith("time", 0) && dataType.isNumeric && regex.matches(unitsString.toLowerCase())
-    }
-
-
-/**
- * Variable dimensions excluding "private" dimensions, e.g. the length
- * dimension of character array string.
- */
-private val Variable.publicDimensions : List<Dimension>
-    get() {
-        return if (isArrayString) dimensions.dropLast(1) else dimensions
-    }

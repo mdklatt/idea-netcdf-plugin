@@ -15,12 +15,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
-import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
-import ucar.nc2.Variable
-import ucar.nc2.time.Calendar
-import ucar.nc2.time.CalendarDateUnit
-import vendor.tandrial.itertools.cartProd
 import java.awt.Font
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.UnsupportedFlavorException
