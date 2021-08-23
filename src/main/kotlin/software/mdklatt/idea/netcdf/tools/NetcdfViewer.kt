@@ -11,8 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.*
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
+import com.intellij.ui.content.*
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
@@ -41,10 +40,25 @@ import kotlin.sequences.Sequence
 class NetcdfToolWindow: ToolWindowFactory, DumbAware {
 
     /**
+     * Interface for tool window content tabs.
+     */
+    private interface ContentTab {
+        val title: String
+        val description: String
+        fun component(): JComponent
+        fun load()
+    }
+
+
+    /**
      * File schema content.
      */
-    inner class SchemaTab : JBTable(SchemaTableModel()) {
+    inner class SchemaTab : JBTable(SchemaTableModel()), ContentTab {
         private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
+
+        override val title = "Schema"
+        override val description = "File schema"
+        override fun component() = JBScrollPane(this)
 
         init {
             emptyText.text = "Drop netCDF file here to open"
@@ -103,7 +117,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         /**
          * Load data for display.
          */
-        private fun load() {
+        override fun load() {
             (model as SchemaTableModel).setData(ncFile!!)
             formatColumns()
             return
@@ -128,7 +142,12 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     /**
      * Variable data content.
      */
-    inner class DataTab : JBTable(DataTableModel()) {
+    inner class DataTab : JBTable(DataTableModel()), ContentTab {
+
+        override val title = "Data"
+        override val description = "Selected variables"
+        override fun component() = JBScrollPane(this)
+
         init {
             emptyText.text = "Select variable(s) in Schema tab"
             autoCreateRowSorter = true
@@ -137,7 +156,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         /**
          * Load variables from the netCDF file.
          */
-        internal fun load() {
+        override fun load() {
             if (displayedVars == selectedVars) {
                 return  // selected variables are already displayed
             }
@@ -179,7 +198,11 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     /**
      * File schema tree view (experimental).
      */
-    inner class TreeTab : Tree() {
+    inner class TreeTab : Tree(), ContentTab {
+
+        override val title = "Tree"
+        override val description = "File schema (experimental tree view)"
+        override fun component() = JBScrollPane(this)
 
         private var root: DefaultMutableTreeNode? = null
 
@@ -187,13 +210,15 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             emptyText.text = "Drop netCDF file in Schema tab to open"
         }
 
-        internal fun load() {
-            // TODO: Load schema from ncFile.
-            root = DefaultMutableTreeNode(ncFile!!.location).also {
-                model = DefaultTreeModel(it)
-                addGroup(it, ncFile!!.rootGroup)
-                expandPath(TreePath(it))
+        override fun load() {
+            ncFile?.let { file ->
+                root = DefaultMutableTreeNode(ncFile?.location).also {
+                    model = DefaultTreeModel(it)
+                    addGroup(it, file.rootGroup)
+                    expandPath(TreePath(it))
+                }
             }
+            return
         }
 
         private fun addGroup(head: DefaultMutableTreeNode, group: Group) {
@@ -223,6 +248,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             DefaultMutableTreeNode("Variables").let { node ->
                 head.add(node)
                 items.forEach {
+                    // TODO: Is there a reason not to alpha sort?
                     DefaultMutableTreeNode(it.fullNameEscaped).apply {
                         node.add(this)
                         addAttributes(this, it.attributes)
@@ -240,6 +266,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             DefaultMutableTreeNode("Attributes").let { node ->
                 head.add(node)
                 items.forEach {
+                    // TODO: Alpha sort.
                     val text = "${it.fullNameEscaped}: ${it.stringValue}"
                     node.add(DefaultMutableTreeNode(text))
                 }
@@ -263,10 +290,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     }
 
 
+    private var tabs = listOf<ContentTab>(SchemaTab(), DataTab(), TreeTab())
     private var ncFile: NetcdfFile? = null
-    private var schemaTab = SchemaTab()
-    private var dataTab = DataTab()
-    private var treeTab = TreeTab()
     private var selectedVars = emptyList<String>()
     private var displayedVars = emptyList<String>()
 
@@ -278,38 +303,24 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
      * @param window current tool window
      */
     override fun createToolWindowContent(project: Project, window: ToolWindow) {
+        val factory = window.contentManager.factory
+        tabs.forEach { tab ->
+            factory.createContent(tab.component(), tab.title, false).also {
+                it.description = tab.description
+                window.contentManager.addContent(it)
+            }
+        }
         window.addContentManagerListener(object : ContentManagerListener {
             override fun selectionChanged(event: ContentManagerEvent) {
+                // Lazy loading when tab is selected.
                 super.selectionChanged(event)
-                event.also {
-                    // TODO: This should be a loop.
-                    if (it.index == 1 && it.operation.name == "add") {
-                        // Data tab is selected, load data.
-                        // TODO: Don't hard code the index.
-                        dataTab.load()
-                    }
-                    else if (it.index == 2 && it.operation.name == "add") {
-                        // Tree tab is selected, load data.
-                        // TODO: Don't hard code the index.
-                        treeTab.load()
-                    }
+                val lazyTabs = listOf("Data", "Tree")
+                val eventTab = tabs[event.index]
+                if (event.operation.name == "add" && lazyTabs.contains(eventTab.title)) {
+                    eventTab.load()
                 }
             }
         })
-        val factory = window.contentManager.factory
-        factory.createContent(JBScrollPane(schemaTab), "Schema", false).also {
-            it.description = "File schema"
-            window.contentManager.addContent(it)
-        }
-        factory.createContent(JBScrollPane(dataTab), "Data", false).also {
-            it.description = "Selected variables"
-            window.contentManager.addContent(it)
-        }
-        factory.createContent(JBScrollPane(treeTab), "Tree", false).also {
-            it.description = "File schema (experimental tree view)"
-            window.contentManager.addContent(it)
-        }
-        window.contentManager
         return
     }
 }
