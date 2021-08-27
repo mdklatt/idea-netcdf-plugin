@@ -15,6 +15,8 @@ import com.intellij.ui.content.*
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
+import software.mdklatt.idea.netcdf.isArrayString
+import software.mdklatt.idea.netcdf.isTime
 import ucar.nc2.*
 import java.awt.Font
 import java.awt.datatransfer.DataFlavor
@@ -481,12 +483,16 @@ internal class SchemaTableModel : AbstractTableModel() {
     fun setData(file: NetcdfFile) {
         logger.debug("Loading schema from ${file.location}")
         schema = file.variables.map {
+            var dataType = if (it.isArrayString) "char[]" else it.dataType.name.toLowerCase()
+            if (it.isTime) {
+                dataType = "time<${dataType}>"
+            }
             arrayOf(
                 it.fullNameEscaped,
                 it.description,
                 it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
                 it.unitsString,
-                it.dataType.name.toLowerCase(),
+                dataType,
             )
         }.toList()
         fireTableStructureChanged()
