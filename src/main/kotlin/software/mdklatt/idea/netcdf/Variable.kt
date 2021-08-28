@@ -52,6 +52,13 @@ internal val Variable.isArrayString: Boolean
 
 
 /**
+ * Base variable name without group prefixes.
+ */
+internal val Variable.nameEscaped: String
+    get() = fullNameEscaped.split("/").last()
+
+
+/**
  * Variable dimensions excluding "private" dimensions, e.g. the length
  * dimension of character array string.
  */

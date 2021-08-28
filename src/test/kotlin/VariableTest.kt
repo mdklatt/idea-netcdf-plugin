@@ -58,6 +58,16 @@ internal class VariableTest {
     }
 
     /**
+     * Test the nameEscaped extension property.
+     */
+    @Test
+    fun testNameEscaped() {
+        val variable = file.findVariable("pr")
+        assertEquals("pr", variable.nameEscaped)
+        return
+    }
+
+    /**
      * Test the publicDimensions extension property.
      */
     @Test
