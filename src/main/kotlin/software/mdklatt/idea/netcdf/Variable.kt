@@ -35,7 +35,8 @@ internal val Variable.isTime : Boolean
     get() {
         val name = fullNameEscaped.split("/").last()
         val regex = CalendarDateUnit.udunitPatternString.toRegex()
-        return name.startsWith("time", 0) && dataType.isNumeric && regex.matches(unitsString.toLowerCase())
+        val isTimeUnits = unitsString?.let { regex.matches(it.toLowerCase()) }
+        return name.startsWith("time", 0) && dataType.isNumeric && isTimeUnits == true
     }
 
 
