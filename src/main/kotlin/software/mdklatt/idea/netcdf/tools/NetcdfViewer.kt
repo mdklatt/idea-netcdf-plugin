@@ -15,8 +15,7 @@ import com.intellij.ui.content.*
 import com.intellij.ui.layout.panel
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
-import software.mdklatt.idea.netcdf.isArrayString
-import software.mdklatt.idea.netcdf.isTime
+import software.mdklatt.idea.netcdf.*
 import ucar.nc2.*
 import java.awt.Font
 import java.awt.datatransfer.DataFlavor
@@ -249,9 +248,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             }
             DefaultMutableTreeNode("Variables").let { node ->
                 head.add(node)
-                items.forEach {
-                    // TODO: Is there a reason not to alpha sort?
-                    DefaultMutableTreeNode(it.fullNameEscaped).apply {
+                items.sortedBy { it.nameEscaped }.forEach {
+                    DefaultMutableTreeNode(it.nameEscaped).apply {
                         node.add(this)
                         addAttributes(this, it.attributes)
                         addDimensions(this, it.dimensions)
@@ -267,8 +265,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             }
             DefaultMutableTreeNode("Attributes").let { node ->
                 head.add(node)
-                items.forEach {
-                    // TODO: Alpha sort.
+                items.sortedBy { it.fullNameEscaped }.forEach {
                     val text = "${it.fullNameEscaped}: ${it.stringValue}"
                     node.add(DefaultMutableTreeNode(text))
                 }
@@ -449,7 +446,6 @@ internal class SchemaTableModel : AbstractTableModel() {
      * @see .getRowCount
      */
     override fun getColumnCount() = labels.size
-
 
     /**
      *
