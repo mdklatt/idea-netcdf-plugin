@@ -1,14 +1,14 @@
 /**
- * View netCDF file contents.
+ * Implementation of the NetCDF Viewer tool window.
  *
  * @see: <a href="https://plugins.jetbrains.com/docs/intellij/tool-windows.html">Tool Windows</a>
  */
 package software.mdklatt.idea.netcdf.tools
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.*
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.*
@@ -18,13 +18,6 @@ import com.intellij.ui.treeStructure.Tree
 import software.mdklatt.idea.netcdf.*
 import ucar.nc2.*
 import java.awt.Font
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.UnsupportedFlavorException
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTarget
-import java.awt.dnd.DropTargetDropEvent
-import java.io.File
-import java.io.IOException
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.table.AbstractTableModel
@@ -38,7 +31,43 @@ import kotlin.sequences.Sequence
 /**
  * NetCDF viewer display.
  */
-class NetcdfToolWindow: ToolWindowFactory, DumbAware {
+class NetcdfViewer(val project: Project) {
+
+    // TODO: This is a mess, refactor (but content tabs share a lot of state)
+
+
+    companion object {
+        private const val ID = "NetCDF"
+    }
+
+    internal fun open(path: String) {
+        val window = getWindow(project)
+        putContent(window)
+        ncFile?.close()  // TODO: is this necessary?
+        ncFile = NetcdfFile.open(path)
+        tabs[0].load()
+        selectedVars = emptyList()
+        displayedVars = emptyList()
+        window.show()
+    }
+
+    private fun getWindow(project: Project) : ToolWindow {
+        val manager = ToolWindowManager.getInstance(project)
+        var window = manager.getToolWindow(ID)
+        if (window == null) {
+            window = manager.registerToolWindow(
+                RegisterToolWindowTask(
+                    id = ID,
+                    icon = IconLoader.getIcon("/icons/ic_extension.svg", javaClass),
+                    component = null,
+                    canCloseContent = false,
+                    canWorkInDumbMode = true,
+                )
+            )
+        }
+        window.setToHideOnEmptyContent(true)
+        return window
+    }
 
     /**
      * Interface for tool window content tabs.
@@ -48,6 +77,7 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         val description: String
         fun component(): JComponent
         fun load()
+        fun clear()
     }
 
 
@@ -61,39 +91,14 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
         override val description = "File schema"
         override fun component() = JBScrollPane(this)
 
-        init {
-            emptyText.text = "Drop netCDF file here to open"
-            dropTarget = createDropTarget()
-            setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
-            selectionModel.addListSelectionListener(this::selectionListener)
+        override fun clear() {
+            (model as SchemaTableModel).clear()
         }
 
-        /**
-         * Create a drag-and-drop target for opening a netCDF file.
-         *
-         * @return: DropTarget instance
-         */
-        private fun createDropTarget(): DropTarget {
-            return object : DropTarget() {
-                @Synchronized
-                override fun drop(event: DropTargetDropEvent) {
-                    try {
-                        event.acceptDrop(DnDConstants.ACTION_COPY)
-                        val accepted = event.transferable.getTransferData(DataFlavor.javaFileListFlavor)
-                        val file = (accepted as? List<*>)?.get(0) as File
-                        ncFile?.close()
-                        ncFile = NetcdfFile.open(file.path)
-                        load()
-                        selectedVars = emptyList()
-                        displayedVars = emptyList()
-                    } catch (_: UnsupportedFlavorException) {
-                        JOptionPane.showMessageDialog(null, "Unable to read file")
-                    } catch (_: IOException) {
-                        JOptionPane.showMessageDialog(null, "Could not open netCDF file")
-                    }
-                    return
-                }
-            }
+        init {
+            emptyText.text = "Drop netCDF file here to open"
+            setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+            selectionModel.addListSelectionListener(this::selectionListener)
         }
 
         /**
@@ -167,6 +172,10 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
             return
         }
 
+        override fun clear() {
+            (model as DataTableModel).clear()
+        }
+
         /**
          * Set column formatting.
          */
@@ -220,6 +229,10 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
                 }
             }
             return
+        }
+
+        override fun clear() {
+            root?.removeAllChildren()
         }
 
         private fun addGroup(head: DefaultMutableTreeNode, group: Group) {
@@ -294,18 +307,13 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
     private var selectedVars = emptyList<String>()
     private var displayedVars = emptyList<String>()
 
-
-    /**
-     * Create tool window content.
-     *
-     * @param project: current project
-     * @param window current tool window
-     */
-    override fun createToolWindowContent(project: Project, window: ToolWindow) {
+    private fun putContent(window: ToolWindow) {
+        window.contentManager.removeAllContents(true)
         val factory = window.contentManager.factory
         tabs.forEach { tab ->
             factory.createContent(tab.component(), tab.title, false).also {
                 it.description = tab.description
+                it.setDisposer { tab.clear() }
                 window.contentManager.addContent(it)
             }
         }
@@ -327,6 +335,8 @@ class NetcdfToolWindow: ToolWindowFactory, DumbAware {
 
 /**
  * Modal dialog for an error message.
+ *
+ * TODO: Replace with Messages.showMessageDialog()
  */
 private class ErrorDialog(private val message: String) : DialogWrapper(false) {
 
@@ -409,13 +419,19 @@ internal class DataTableModel() : AbstractTableModel() {
     fun setData(file: NetcdfFile, varNames: Sequence<String>) {
         // TODO: Verify that all variables have the same dimensions.
         logger.debug("Loading data from ${file.location}")
-        table?.clear()
+        clear()  // TODO: is this necessary?
         table = TableView(file).also { it.add(varNames) }
         fireTableStructureChanged()
         return
     }
+
+    internal fun clear() {
+        table?.clear()
+    }
 }
 
+
+// TODO: Move these to separate file? Models.kt?
 
 /**
  * Table model for a netCDF file schema.
@@ -476,7 +492,7 @@ internal class SchemaTableModel : AbstractTableModel() {
      *
      * @param file: open netCDF file
      */
-    fun setData(file: NetcdfFile) {
+    internal fun setData(file: NetcdfFile) {
         logger.debug("Loading schema from ${file.location}")
         schema = file.variables.map {
             var dataType = if (it.isArrayString) "char[]" else it.dataType.name.toLowerCase()
@@ -493,4 +509,9 @@ internal class SchemaTableModel : AbstractTableModel() {
         }.toList()
         fireTableStructureChanged()
     }
+
+    internal fun clear() {
+        schema = emptyList()
+    }
+
 }

@@ -7,13 +7,20 @@
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
+    <actions>
+        <action id="software.mdklatt.idea.netcdf.actions.OpenNetcdfViewer"
+                class="software.mdklatt.idea.netcdf.actions.OpenNetcdfViewer"
+                text="Open NetCDF Viewer"
+                description="Open file in the NetCDF Viewer">
+            <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
+        </action>
+    </actions>
+
     <extensions defaultExtensionNs="com.intellij">
         <configurationType implementation="software.mdklatt.idea.netcdf.configurations.HelloConfigurationType"/>
         <fileType name="netCDF" implementationClass="software.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
         <fileType name="CDL" implementationClass="software.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
         <fileType name="NcML" implementationClass="software.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
-        <toolWindow id="NetCDF" secondary="true" icon="AllIcons.General.Modified" anchor="right"
-                    factoryClass="software.mdklatt.idea.netcdf.tools.NetcdfToolWindow"/>
     </extensions>
 
 </idea-plugin>

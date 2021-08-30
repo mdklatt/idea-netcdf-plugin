@@ -49,5 +49,5 @@ class NetcdfFileType: UserBinaryFileType() {
      * @return: icon
      * @see <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Icons and Images</a>
      */
-    override fun getIcon() = AllIcons.FileTypes.Archive
+    override fun getIcon() = AllIcons.FileTypes.Custom
 }
