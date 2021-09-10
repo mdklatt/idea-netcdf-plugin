@@ -1,9 +1,5 @@
-package software.mdklatt.idea.netcdf.tools
+package software.mdklatt.idea.netcdf
 
-import software.mdklatt.idea.netcdf.dateUnits
-import software.mdklatt.idea.netcdf.isArrayString
-import software.mdklatt.idea.netcdf.isTime
-import software.mdklatt.idea.netcdf.publicDimensions
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable

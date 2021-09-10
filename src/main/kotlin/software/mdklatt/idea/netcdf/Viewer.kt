@@ -19,13 +19,10 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import software.mdklatt.idea.netcdf.files.NetcdfFileType
-import software.mdklatt.idea.netcdf.tools.NetcdfViewer
-import software.mdklatt.idea.netcdf.tools.TableView
 import ucar.nc2.*
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
-import javax.swing.SwingUtilities.windowForComponent
 import javax.swing.event.ListSelectionEvent
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer

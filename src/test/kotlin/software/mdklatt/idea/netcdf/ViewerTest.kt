@@ -1,54 +1,23 @@
 /**
- * Unit tests for the NetcdfViewer module.
+ * Unit tests for the Viewer module.
  */
-package software.mdklatt.idea.netcdf.tools
+package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.jupiter.api.Test
+import software.mdklatt.idea.netcdf.DataTab
+import software.mdklatt.idea.netcdf.SchemaTab
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
-
-
-// The IDEA platform tests use JUnit3, so method names are used to determine
-// behavior instead of annotations. Notably, test classes are *not* constructed
-// before each test, so setUp() methods should be used for initialization.
-// Also, test functions must be named `testXXX` or they will not be found
-// during automatic discovery.
-
-/**
- * Unit tests for the NetcdfToolWindow class.
- */
-//internal class NetcdfToolWindowTest : BasePlatformTestCase() {  // JUnit3
-//
-//    private lateinit var window: NetcdfViewer
-//
-//    /**
-//     * Per-test initialization.
-//     */
-//    override fun setUp() {
-//        super.setUp()
-//        window = NetcdfViewer()
-//        return
-//    }
-//
-//    /**
-//     * Test the isApplicable attribute.
-//     */
-//    fun testIsApplicable() {
-//        assertTrue(window.isApplicable(project))
-//        return
-//    }
-//}
 
 
 /**
  * Unit tests for the DataTableModel class.
  */
-internal class DataTableModelTest {
+internal class DataTabModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val model = DataTableModel()
+    private val model = DataTab.Model()
 
     /**
      * Test the rowCount property.
@@ -106,11 +75,11 @@ internal class DataTableModelTest {
 /**
  * Unit tests for the SchemaTableModel class.
  */
-internal class SchemaTableModelTest {
+internal class SchemaTabModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val model = SchemaTableModel().apply { setData(file) }
+    private val model = SchemaTab.Model().apply { setData(file) }
     private val labels = arrayOf("Variable", "Description", "Dimensions", "Units", "Type")
 
     /**
