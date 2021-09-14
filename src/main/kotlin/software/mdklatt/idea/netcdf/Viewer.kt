@@ -445,11 +445,12 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
     override val component = JBScrollPane(this)
 
     private var root: DefaultMutableTreeNode? = null
+    private var view = TreeView(fileTab.file)
 
     fun load() {
         root = DefaultMutableTreeNode(fileTab.file.location).also {
             model = DefaultTreeModel(it)
-            addGroup(it, fileTab.file.rootGroup)
+            addGroup(it, view.root)
             expandPath(TreePath(it))
         }
         return
@@ -473,36 +474,35 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
         root?.removeAllChildren()
     }
 
-    private fun addGroup(head: DefaultMutableTreeNode, group: Group) {
-        val node : DefaultMutableTreeNode
+    private fun addGroup(head: DefaultMutableTreeNode, group: TreeView.Group) {
+        val node: DefaultMutableTreeNode
         if (group.isRoot) {
             node = head
         } else {
-            node = DefaultMutableTreeNode(group.fullNameEscaped)
+            node = DefaultMutableTreeNode(group.label)
             head.add(node)
         }
-        addAttributes(node, group.attributes)
-        addDimensions(node, group.dimensions)
+        group.attributes.forEach { node.add(DefaultMutableTreeNode(it)) }
         addVariables(node, group.variables)
-        if (group.groups.isNotEmpty()) {
+        if (group.groups.count() > 0) {
             DefaultMutableTreeNode("Groups").let {
                 node.add(it)
-                group.groups.forEach { sub-> addGroup(it, sub) }
+                group.groups.forEach { sub -> addGroup(it, sub) }
             }
         }
         return
     }
 
-    private fun addVariables(head: DefaultMutableTreeNode, items: List<Variable>) {
-        if (items.isEmpty()) {
+    private fun addVariables(head: DefaultMutableTreeNode, items: Sequence<TreeView.Variable>) {
+        if (items.count() == 0) {
             return
         }
         DefaultMutableTreeNode("Variables").let { node ->
             head.add(node)
-            items.sortedBy { it.nameEscaped }.forEach {
-                DefaultMutableTreeNode(it.nameEscaped).apply {
+            items.forEach {
+                DefaultMutableTreeNode(it.label).apply {
                     node.add(this)
-                    addAttributes(this, it.attributes)
+                    it.attributes.forEach { this.add(DefaultMutableTreeNode(it)) }
                     addDimensions(this, it.dimensions)
                 }
             }
@@ -510,27 +510,13 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
         return
     }
 
-    private fun addAttributes(head: DefaultMutableTreeNode, items: List<Attribute>) {
-        if (items.isEmpty()) {
-            return
-        }
-        items.sortedBy { it.fullNameEscaped }.forEach {
-            val text = "${it.fullNameEscaped}: ${it.stringValue}"
-            head.add(DefaultMutableTreeNode(text))
-        }
-        return
-    }
-
-    private fun addDimensions(head: DefaultMutableTreeNode, items: List<Dimension>) {
-        if (items.isEmpty()) {
+    private fun addDimensions(head: DefaultMutableTreeNode, items: Sequence<String>) {
+        if (items.count() == 0) {
             return
         }
         DefaultMutableTreeNode("Dimensions").let { node ->
             head.add(node)
-            items.forEach {
-                // TODO: Add shape and unlimited.
-                node.add(DefaultMutableTreeNode(it.fullNameEscaped))
-            }
+            items.forEach { node.add(DefaultMutableTreeNode(it)) }
         }
         return
     }
