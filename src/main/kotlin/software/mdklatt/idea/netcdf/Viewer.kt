@@ -85,10 +85,10 @@ class OpenNetcdfViewer : AnAction() {
         val window = getWindow(project)
         window.contentManager.removeAllContents(true)
         val file = NetcdfFile.open(path)
-        val schemaTab = SchemaTab(file)
-        val dataTab = DataTab(file, schemaTab)
+        val fileTab = FileTab(file)
+        val dataTab = DataTab(file, fileTab)
         val treeTab = TreeTab(file)
-        listOf(schemaTab, dataTab, treeTab).forEach { it.addContent(window) }
+        listOf(fileTab, dataTab, treeTab).forEach { it.addContent(window) }
         window.show()
         return
     }
@@ -137,7 +137,7 @@ private interface ToolWindowTab {
 /**
  * Display file schema.
  */
-internal class SchemaTab(file: NetcdfFile) : JBTable(Model()), ToolWindowTab {
+internal class FileTab(file: NetcdfFile) : JBTable(Model()), ToolWindowTab {
     override val title = "Schema"
     override val description = "File schema"
     override val component = JBScrollPane(this)
@@ -285,7 +285,7 @@ internal class SchemaTab(file: NetcdfFile) : JBTable(Model()), ToolWindowTab {
 /**
  * Display variable data.
  */
-internal class DataTab(private val file: NetcdfFile, private val schemaTab: SchemaTab) : JBTable(Model()), ToolWindowTab {
+internal class DataTab(private val file: NetcdfFile, private val fileTab: FileTab) : JBTable(Model()), ToolWindowTab {
 
     override val title = "Data"
     override val description = "Selected variables"
@@ -321,11 +321,11 @@ internal class DataTab(private val file: NetcdfFile, private val schemaTab: Sche
      * Load variables from the netCDF file.
      */
     fun load() {
-        if (displayedVars == schemaTab.selectedVars) {
+        if (displayedVars == fileTab.selectedVars) {
             return  // selected variables are already displayed
         }
-        (model as Model).setData(file, schemaTab.selectedVars.asSequence())
-        displayedVars = schemaTab.selectedVars
+        (model as Model).setData(file, fileTab.selectedVars.asSequence())
+        displayedVars = fileTab.selectedVars
         formatColumns()
         return
     }
@@ -338,7 +338,7 @@ internal class DataTab(private val file: NetcdfFile, private val schemaTab: Sche
         columnModel.columns.asSequence().forEach {
             var headerStyle = Font.BOLD
             var cellStyle = Font.PLAIN
-            if (!schemaTab.selectedVars.contains(it.headerValue)) {
+            if (!fileTab.selectedVars.contains(it.headerValue)) {
                 // Add italics to coordinate columns.
                 headerStyle = headerStyle or Font.ITALIC
                 cellStyle = cellStyle or Font.ITALIC

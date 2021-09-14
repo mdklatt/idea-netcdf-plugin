@@ -5,13 +5,13 @@ package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
 
 import org.junit.jupiter.api.Test
 import software.mdklatt.idea.netcdf.DataTab
-import software.mdklatt.idea.netcdf.SchemaTab
+import software.mdklatt.idea.netcdf.FileTab
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
 
 
 /**
- * Unit tests for the DataTableModel class.
+ * Unit tests for the DataTab.Model class.
  */
 internal class DataTabModelTest {
 
@@ -73,13 +73,13 @@ internal class DataTabModelTest {
 
 
 /**
- * Unit tests for the SchemaTableModel class.
+ * Unit tests for the FileTab.Model class.
  */
-internal class SchemaTabModelTest {
+internal class FileTabModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val model = SchemaTab.Model().apply { setData(file) }
+    private val model = FileTab.Model().apply { setData(file) }
     private val labels = arrayOf("Variable", "Description", "Dimensions", "Units", "Type")
 
     /**
