@@ -77,17 +77,15 @@ class OpenNetcdfViewer : AnAction() {
                 )
             )
         }
-        window.setToHideOnEmptyContent(true)
-        return window
+        return window.also { it.setToHideOnEmptyContent(true) }
     }
 
     private fun open(project: Project, path: String) {
         val window = getWindow(project)
         window.contentManager.removeAllContents(true)
-        val file = NetcdfFile.open(path)
-        val fileTab = FileTab(file)
-        val dataTab = DataTab(file, fileTab)
-        val treeTab = TreeTab(file)
+        val fileTab = FileTab(path)
+        val dataTab = DataTab(fileTab)
+        val treeTab = TreeTab(fileTab)
         listOf(fileTab, dataTab, treeTab).forEach { it.addContent(window) }
         window.show()
         return
@@ -137,25 +135,28 @@ private interface ToolWindowTab {
 /**
  * Display file schema.
  */
-internal class FileTab(file: NetcdfFile) : JBTable(Model()), ToolWindowTab {
+internal class FileTab(path: String) : JBTable(Model()), ToolWindowTab {
     override val title = "Schema"
     override val description = "File schema"
     override val component = JBScrollPane(this)
 
     override fun dispose() {
         (model as Model).clear()
+        file.close()  // TODO: might this happen before other tabs are done with it?
         return
     }
 
+    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
+    internal val file = NetcdfFile.open(path)
+    internal var selectedVars = emptyList<String>()
+
     init {
+        logger.info("Opened netCDF file ${file.location}")
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
         selectionModel.addListSelectionListener(this::selectionListener)
         (model as Model).setData(file)
         formatColumns()
     }
-
-    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-    internal var selectedVars = emptyList<String>()
 
 
     /**
@@ -285,7 +286,7 @@ internal class FileTab(file: NetcdfFile) : JBTable(Model()), ToolWindowTab {
 /**
  * Display variable data.
  */
-internal class DataTab(private val file: NetcdfFile, private val fileTab: FileTab) : JBTable(Model()), ToolWindowTab {
+internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWindowTab {
 
     override val title = "Data"
     override val description = "Selected variables"
@@ -324,7 +325,7 @@ internal class DataTab(private val file: NetcdfFile, private val fileTab: FileTa
         if (displayedVars == fileTab.selectedVars) {
             return  // selected variables are already displayed
         }
-        (model as Model).setData(file, fileTab.selectedVars.asSequence())
+        (model as Model).setData(fileTab.file, fileTab.selectedVars.asSequence())
         displayedVars = fileTab.selectedVars
         formatColumns()
         return
@@ -437,7 +438,7 @@ internal class DataTab(private val file: NetcdfFile, private val fileTab: FileTa
 /**
  * File schema tree view (experimental).
  */
-class TreeTab(private val file: NetcdfFile) : Tree(), ToolWindowTab {
+internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
 
     override val title = "Tree"
     override val description = "File schema (experimental tree view)"
@@ -446,9 +447,9 @@ class TreeTab(private val file: NetcdfFile) : Tree(), ToolWindowTab {
     private var root: DefaultMutableTreeNode? = null
 
     fun load() {
-        root = DefaultMutableTreeNode(file.location).also {
+        root = DefaultMutableTreeNode(fileTab.file.location).also {
             model = DefaultTreeModel(it)
-            addGroup(it, file.rootGroup)
+            addGroup(it, fileTab.file.rootGroup)
             expandPath(TreePath(it))
         }
         return
