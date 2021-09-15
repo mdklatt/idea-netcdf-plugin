@@ -9,7 +9,7 @@ import kotlin.sequences.Sequence
 /**
  * Tree view of a netCDF file schema.
  */
-class TreeView(file: NetcdfFile) {
+class FileView(file: NetcdfFile) {
 
     /**
      * Base class for tree nodes.

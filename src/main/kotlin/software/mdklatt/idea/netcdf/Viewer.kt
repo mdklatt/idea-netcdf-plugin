@@ -19,7 +19,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import software.mdklatt.idea.netcdf.files.NetcdfFileType
-import ucar.nc2.*
+import ucar.nc2.NetcdfFile
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
@@ -441,7 +441,7 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
     override val component = JBScrollPane(this)
 
     private var root: DefaultMutableTreeNode? = null
-    private var view = TreeView(fileTab.file)
+    private var view = FileView(fileTab.file)
 
     fun load() {
         root = DefaultMutableTreeNode(fileTab.file.location).also {
@@ -470,7 +470,7 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
         root?.removeAllChildren()
     }
 
-    private fun addGroup(head: DefaultMutableTreeNode, group: TreeView.Group) {
+    private fun addGroup(head: DefaultMutableTreeNode, group: FileView.Group) {
         val node: DefaultMutableTreeNode
         if (group.isRoot) {
             node = head
@@ -489,7 +489,7 @@ internal class TreeTab(private val fileTab: FileTab) : Tree(), ToolWindowTab {
         return
     }
 
-    private fun addVariables(head: DefaultMutableTreeNode, items: Sequence<TreeView.Variable>) {
+    private fun addVariables(head: DefaultMutableTreeNode, items: Sequence<FileView.Variable>) {
         if (items.count() == 0) {
             return
         }

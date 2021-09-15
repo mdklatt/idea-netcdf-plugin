@@ -4,22 +4,19 @@
 package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
-import software.mdklatt.idea.netcdf.TreeView
+import software.mdklatt.idea.netcdf.FileView
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 
 /**
- * Unit tests for the TreeView class.
+ * Unit tests for the FileView class.
  */
-internal class TreeViewTest {
+internal class FileViewTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val view = TreeView(file)
+    private val view = FileView(file)
 
     /**
      * Test the groups property.
