@@ -43,7 +43,7 @@ class TreeView(file: NetcdfFile) {
      */
     internal class Variable(variable: ucar.nc2.Variable) : Node<ucar.nc2.Variable>(variable) {
 
-        override val label = fileNode.nameEscaped
+        override val label = "${fileNode.nameEscaped} (${fileNode.typeString})"
 
         // TODO: Add type information to node label.
 

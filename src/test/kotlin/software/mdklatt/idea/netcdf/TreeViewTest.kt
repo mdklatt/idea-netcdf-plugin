@@ -38,8 +38,8 @@ internal class TreeViewTest {
     fun testVariables() {
         val labels = view.root.variables.map { it.label }
         assertEquals(12, labels.count())
-        assertEquals("area", labels.first())
-        assertEquals("ua", labels.last())
+        assertEquals("area (float)", labels.first())
+        assertEquals("ua (float)", labels.last())
         return
     }
 }

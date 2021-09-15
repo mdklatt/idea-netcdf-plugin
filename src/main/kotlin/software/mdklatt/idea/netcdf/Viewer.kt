@@ -260,16 +260,12 @@ internal class FileTab(path: String) : JBTable(Model()), ToolWindowTab {
         internal fun setData(file: NetcdfFile) {
             logger.debug("Loading schema from ${file.location}")
             schema = file.variables.map {
-                var dataType = if (it.isArrayString) "char[]" else it.dataType.name.toLowerCase()
-                if (it.isTime) {
-                    dataType = "time<${dataType}>"
-                }
                 arrayOf(
                     it.fullNameEscaped,
                     it.description,
                     it.nameAndDimensions.substring(it.nameAndDimensions.lastIndexOf("(")),
                     it.unitsString,
-                    dataType,
+                    it.typeString,
                 )
             }.toList()
             fireTableStructureChanged()

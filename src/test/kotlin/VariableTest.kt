@@ -24,9 +24,19 @@ internal class VariableTest {
      */
     @Test
     fun testCalendar() {
-        val time = file.findVariable("time")
-        assertEquals("noleap", time.calendar?.name)
+        assertEquals("noleap", file.findVariable("time").calendar?.name)
         assertNull(file.findVariable("pr").calendar)
+        return
+    }
+
+    /**
+     * Test the typeString extension property.
+     */
+    @Test
+    fun testTypeString() {
+        assertEquals("float", file.findVariable("pr").typeString)
+        assertEquals("time<double>", file.findVariable("time").typeString)
+        return
     }
 
     /**
@@ -37,6 +47,7 @@ internal class VariableTest {
         val time = file.findVariable("time")
         assertEquals("Day since 0000-01-01T00:00:00Z", time.dateUnits?.toString())
         assertNull(file.findVariable("pr").dateUnits)
+        return
     }
 
     /**

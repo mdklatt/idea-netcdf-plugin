@@ -17,6 +17,16 @@ internal val Variable.calendar : Calendar?
 
 
 /**
+ * Data type description.
+ */
+internal val Variable.typeString : String
+    get() {
+        val typeString = if (isArrayString) "char[${shape.last()}]" else dataType.name.toLowerCase()
+        return if (isTime) "time<${typeString}>" else typeString
+    }
+
+
+/**
  * Date units object if this variable has a calendar, or else null.
  */
 internal val Variable.dateUnits : CalendarDateUnit?
