@@ -11,7 +11,7 @@ import java.lang.IllegalStateException
  * Represent n-dimensional netCDF variables as a two-dimensional table where
  * variables are mapped to columns in flattened row-major order.
 */
-internal class TableView(private var file: NetcdfFile) {
+internal class DataView(private var file: NetcdfFile) {
     /**
      * Define a table column.
      */

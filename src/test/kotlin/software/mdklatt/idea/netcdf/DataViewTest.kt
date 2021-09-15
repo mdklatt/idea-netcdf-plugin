@@ -6,20 +6,20 @@ package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import software.mdklatt.idea.netcdf.TableView
+import software.mdklatt.idea.netcdf.DataView
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 
 /**
- * Unit tests for the TableView class.
+ * Unit tests for the DataView class.
  */
-internal class TableViewTest {
+internal class DataViewTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val table = TableView(file).also { it.add("pr", "tas", "tas") }  // test duplicate add
+    private val view = DataView(file).also { it.add("pr", "tas", "tas") }  // test duplicate add
     private val labels = listOf("time", "lat", "lon", "pr", "tas")
 
     /**
@@ -27,7 +27,7 @@ internal class TableViewTest {
      */
     @Test
     fun testLabels() {
-        assertEquals(labels, table.labels)
+        assertEquals(labels, view.labels)
         return
     }
 
@@ -36,7 +36,7 @@ internal class TableViewTest {
      */
     @Test
     fun testRowCount() {
-        assertEquals(32768, table.rowCount)
+        assertEquals(32768, view.rowCount)
     }
 
     /**
@@ -44,7 +44,7 @@ internal class TableViewTest {
      */
     @Test
     fun testColumnCount() {
-        assertEquals(5, table.columnCount)
+        assertEquals(5, view.columnCount)
     }
 
     /**
@@ -53,7 +53,7 @@ internal class TableViewTest {
     @ParameterizedTest
     @ValueSource(ints = [0, 1, 2, 3, 4])
     fun testColumnIndex(index: Int) {
-        assertEquals(labels[index], table.column(index).label)
+        assertEquals(labels[index], view.column(index).label)
         return
     }
 
@@ -63,7 +63,7 @@ internal class TableViewTest {
     @ParameterizedTest
     @ValueSource(strings = ["time", "lat", "lon", "pr", "tas"])
     fun testColumnLabel(label: String) {
-        assertEquals(label, table.column(label).label)
+        assertEquals(label, view.column(label).label)
         return
     }
 
@@ -72,8 +72,8 @@ internal class TableViewTest {
      */
     @Test
     fun testValue() {
-        assertEquals("2000-05-16T12:00:00Z", table.column(0).value(0))
-        assertEquals(215.73935f, table.column(4).value(2))
+        assertEquals("2000-05-16T12:00:00Z", view.column(0).value(0))
+        assertEquals(215.73935f, view.column(4).value(2))
         return
     }
 
@@ -82,8 +82,8 @@ internal class TableViewTest {
      */
     @Test
     fun testClear() {
-        table.clear()
-        assertTrue(table.labels.isEmpty())
+        view.clear()
+        assertTrue(view.labels.isEmpty())
         return
     }
 }

@@ -359,7 +359,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWin
     class Model : AbstractTableModel() {
 
         private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-        var table: TableView? = null
+        var view: DataView? = null
 
         /**
          * Returns the number of rows in the model. A
@@ -370,7 +370,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWin
          * @return the number of rows in the model
          * @see .getColumnCount
          */
-        override fun getRowCount() = table?.rowCount ?: 0
+        override fun getRowCount() = view?.rowCount ?: 0
 
         /**
          * Returns the number of columns in the model. A
@@ -380,20 +380,20 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWin
          * @return the number of columns in the model
          * @see .getRowCount
          */
-        override fun getColumnCount() = table?.columnCount ?: 0
+        override fun getColumnCount() = view?.columnCount ?: 0
 
         /**
          *
          */
         override fun getColumnClass(columnIndex: Int): Class<*> =
-            table?.column(columnIndex)?.type ?: throw IllegalStateException("empty table")
+            view?.column(columnIndex)?.type ?: throw IllegalStateException("empty table")
 
         /**
          * Get the name label for a column.
          *
          */
         override fun getColumnName(column: Int) =
-            table?.column(column)?.label ?: throw IllegalStateException("empty table")
+            view?.column(column)?.label ?: throw IllegalStateException("empty table")
 
         /**
          * Returns the value for the cell at `columnIndex` and
@@ -404,7 +404,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWin
          * @return  the value Object at the specified cell
          */
         override fun getValueAt(rowIndex: Int, columnIndex: Int) =
-            table?.column(columnIndex)?.value(rowIndex) ?: throw IllegalStateException("empty table")
+            view?.column(columnIndex)?.value(rowIndex) ?: throw IllegalStateException("empty table")
 
         /**
          * Set the model data.
@@ -420,13 +420,13 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ToolWin
             // TODO: Verify that all variables have the same dimensions.
             logger.debug("Loading data from ${file.location}")
             clear()  // TODO: is this necessary?
-            table = TableView(file).also { it.add(varNames) }
+            view = DataView(file).also { it.add(varNames) }
             fireTableStructureChanged()
             return
         }
 
         internal fun clear() {
-            table?.clear()
+            view?.clear()
         }
     }
 }
