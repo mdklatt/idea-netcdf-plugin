@@ -9,12 +9,11 @@ import kotlin.sequences.Sequence
 /**
  * Tree view of a netCDF file schema.
  */
-class FileView(file: NetcdfFile) {
+internal class FileView(file: NetcdfFile) {
     /**
      * Base class for tree nodes.
      */
     abstract class Node<out T>(protected val fileNode: T) where T: CDMNode, T: AttributeContainer {
-
         /** Node display label. */
         open val name: String = fileNode.fullNameEscaped
 
@@ -24,7 +23,11 @@ class FileView(file: NetcdfFile) {
                 "${it.fullNameEscaped}: ${it.stringValue}"
             }.asSequence()
 
-        /** String representation. */
+        /**
+         * String representation.
+         *
+         * @return: string value
+         */
         override fun toString() = name
     }
 
@@ -32,7 +35,6 @@ class FileView(file: NetcdfFile) {
      * Node for a netCDF group.
      */
     class Group(group: ucar.nc2.Group, val isRoot: Boolean = false) : Node<ucar.nc2.Group>(group) {
-
         /** All groups defined under this group. */
         val groups = fileNode.groups.map { Group(it) }.sortedBy { it.name }.asSequence()
 
@@ -44,15 +46,19 @@ class FileView(file: NetcdfFile) {
      * Node for a netCDF variable.
      */
     class Variable(variable: ucar.nc2.Variable) : Node<ucar.nc2.Variable>(variable) {
-
         /** Variable dimensions. */
         val dimensions: Sequence<String>
             // TODO: sizes and is unlimited
             get() = fileNode.publicDimensions.map { it.fullNameEscaped }.asSequence()
 
+        /**
+         * String representation.
+         *
+         * @return: string value
+         */
         override fun toString() = "${fileNode.nameEscaped} (${fileNode.typeString})"
     }
 
-    /** Root group for the file. */
-    internal val root = Group(file.rootGroup, true)
+    /** File root group. */
+    val root = Group(file.rootGroup, true)
 }
