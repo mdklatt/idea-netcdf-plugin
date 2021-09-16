@@ -48,7 +48,7 @@ class FileView(file: NetcdfFile) {
         /** Variable dimensions. */
         val dimensions: Sequence<String>
             // TODO: sizes and is unlimited
-            get() = fileNode.dimensions.map { it.fullNameEscaped }.asSequence()
+            get() = fileNode.publicDimensions.map { it.fullNameEscaped }.asSequence()
 
         override fun toString() = "${fileNode.nameEscaped} (${fileNode.typeString})"
     }
