@@ -27,6 +27,7 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.DefaultTreeSelectionModel
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
 import kotlin.sequences.Sequence
@@ -135,18 +136,15 @@ private interface ViewerTab {
 
 
 /**
- * File schema tree view (experimental).
+ * File schema tree view.
  */
 internal class FileTab(path: String) : Tree(), ViewerTab {
-
-    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-
-    // TODO: Custom selection model that only allows selection of Variable nodes.
 
     override val title = "File"
     override val description = "File schema (experimental tree view)"
     override val component = JBScrollPane(this)
 
+    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
     val file: NetcdfFile = NetcdfFile.open(path)
     var selectedVars = emptyList<String>()
 
@@ -158,6 +156,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
     }
     init {
         logger.debug("Loading schema from ${file.location}")
+        selectionModel = SelectionModel()
         selectionModel.selectionMode = DISCONTIGUOUS_TREE_SELECTION
         addTreeSelectionListener(this::selectionListener)
     }
@@ -237,6 +236,37 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             selectedVars = variables.map { it.name }
         }
         return
+    }
+
+    /**
+     * Restrict selections to Variable nodes.
+     */
+    private class SelectionModel : DefaultTreeSelectionModel() {
+        /**
+         * Set the selection path if the last component is a Variable node.
+         *
+         * @param path: selection path
+         */
+        override fun setSelectionPath(path: TreePath?) {
+            val node = path?.lastPathComponent as DefaultMutableTreeNode
+            if (node.userObject is FileView.Variable) {
+                super.setSelectionPath(path)
+            }
+            return
+        }
+
+        /**
+         * Add to the selection path if the last component is a Variable node.
+         *
+         * @param path: selection path
+         */
+        override fun addSelectionPath(path: TreePath?) {
+            val node = path?.lastPathComponent as DefaultMutableTreeNode
+            if (node.userObject is FileView.Variable) {
+                super.addSelectionPath(path)
+            }
+            return
+        }
     }
 }
 
