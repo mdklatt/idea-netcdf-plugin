@@ -1,9 +1,6 @@
 # NetCDF Plugin
 
-[![Build](https://api.travis-ci.com/mdklatt/idea-netcdf-plugin.svg)][travis:build]
-
-[travis:build]: https://travis-ci.com/mdklatt/idea-netcdf-plugin
-
+[![Build](https://github.com/mdklatt/idea-netcdf-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/mdklatt/idea-netcdf-plugin/actions/workflows/build.yml)
 
 <!-- Plugin description -->
 
