@@ -68,6 +68,7 @@ class OpenNetcdfViewer : AnAction() {
         var window = manager.getToolWindow(TITLE)
         if (window == null) {
             // First-time tool registration.
+            // TODO: Deprecated: "Use ToolWindowFactory and toolWindow extension point"
             window = manager.registerToolWindow(
                 RegisterToolWindowTask(
                     id = TITLE,
