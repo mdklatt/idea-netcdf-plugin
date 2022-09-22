@@ -1,66 +1,52 @@
+// Adapted from <https://github.com/JetBrains/intellij-platform-plugin-template>.
+
+import org.jetbrains.changelog.date
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
 
+
 plugins {
-    // Kotlin support
-    kotlin("jvm") version "1.5.10"
-    // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "1.0"
-    // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
-    id("org.jetbrains.changelog") version "1.1.2"
+    kotlin("jvm") version("1.7.10")
+    id("org.jetbrains.intellij") version("1.9.0")
+    id("org.jetbrains.changelog") version("1.3.1")
 }
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
 
-
-// Configure project's dependencies
 repositories {
     mavenCentral()
     maven {
         url = uri("https://artifacts.unidata.ucar.edu/repository/unidata-all/")
     }
 }
+
+
 dependencies {
     implementation("edu.ucar:cdm:5.1.0")
     implementation("edu.ucar:netcdf4:5.1.0")
     implementation("org.slf4j:slf4j-jdk14:1.7.30")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
-    testImplementation("org.junit.vintage:junit-vintage-engine:5.7.0")
+    testImplementation(kotlin("test"))
+    testImplementation(platform("org.junit:junit-bom:5.9.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")  // required for IDE platform tests
 }
 
-
-// Configure gradle-intellij-plugin plugin.
-// Read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-    pluginName.set(properties("pluginName"))
-    version.set(properties("platformVersion"))
-    type.set(properties("platformType"))
-    downloadSources.set(properties("platformDownloadSources").toBoolean())
-    updateSinceUntilBuild.set(true)
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
-}
-
-// Configure gradle-changelog-plugin plugin.
-// Read more: https://github.com/JetBrains/gradle-changelog-plugin
-changelog {
-    version = properties("pluginVersion")
-    groups = emptyList()
-}
 
 tasks {
-    // Set the compatibility versions to 1.8
+
+    wrapper {
+        gradleVersion = "7.5.1"
+    }
+
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions {
+            jvmTarget = "11"  // required since 2020.3
+        }
     }
 
     patchPluginXml {
-        version.set(properties("pluginVersion"))
+        // https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-patchpluginxml
         sinceBuild.set(properties("pluginSinceBuild"))
         untilBuild.set(properties("pluginUntilBuild"))
 
@@ -78,11 +64,21 @@ tasks {
         )
 
         // Get the latest available change notes from the changelog file
-        changeNotes.set(provider { changelog.getLatest().toHTML() })
+        changeNotes.set(changelog.getLatest().toHTML())
     }
 
     runPluginVerifier {
-        ideVersions.set(properties("pluginVerifierIdeVersions").split(',').map(String::trim).filter(String::isNotEmpty))
+        // https://github.com/JetBrains/intellij-plugin-verifier
+        ideVersions.set(properties("pluginVerifyVersions").split(',').map(String::trim).filter(String::isNotEmpty))
+    }
+
+    runIdeForUiTests {
+        // TODO
+        // <https://github.com/JetBrains/intellij-ui-test-robot>
+        systemProperty("robot-server.port", "8082")
+        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
+        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
+        systemProperty("jb.consents.confirmation.enabled", "false")
     }
 
     publishPlugin {
@@ -94,7 +90,28 @@ tasks {
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
 
-    test {
-        useJUnitPlatform()
+    check {
+        // Add plugin validation tasks to default checks.
+        dependsOn(verifyPlugin)
+        dependsOn(verifyPluginConfiguration)
+        dependsOn(runPluginVerifier)
     }
+}
+
+
+intellij {
+    // <https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html>
+    version.set(properties("platformVersion"))
+    updateSinceUntilBuild.set(true)
+    downloadSources.set(true)
+}
+
+
+changelog {
+    // <https://github.com/JetBrains/gradle-changelog-plugin>
+    path.set("${project.projectDir}/CHANGELOG.md")
+    header.set(provider { "[${version.get()}] - ${date()}" })
+    itemPrefix.set("-")
+    unreleasedTerm.set("[Unreleased]")
+    groups.set(listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"))
 }

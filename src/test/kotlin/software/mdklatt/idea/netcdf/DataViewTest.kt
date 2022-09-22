@@ -1,15 +1,14 @@
 /**
  * Unit tests for the NetcdfViewer module.
  */
-package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
+package software.mdklatt.idea.netcdf
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
-import software.mdklatt.idea.netcdf.DataView
-import ucar.nc2.NetcdfFile
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import ucar.nc2.NetcdfFile
 
 
 /**

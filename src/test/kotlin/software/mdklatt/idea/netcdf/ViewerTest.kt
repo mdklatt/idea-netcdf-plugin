@@ -1,10 +1,9 @@
 /**
  * Unit tests for the Viewer module.
  */
-package software.mdklatt.idea.netcdf.software.mdklatt.idea.netcdf
+package software.mdklatt.idea.netcdf
 
 import org.junit.jupiter.api.Test
-import software.mdklatt.idea.netcdf.DataTab
 import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
 

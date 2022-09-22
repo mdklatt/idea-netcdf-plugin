@@ -3,12 +3,12 @@
  */
 package software.mdklatt.idea.netcdf
 
-import org.junit.jupiter.api.Test
-import ucar.nc2.NetcdfFile
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import ucar.nc2.NetcdfFile
 
 
 /**
