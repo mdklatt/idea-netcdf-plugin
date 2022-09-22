@@ -14,6 +14,36 @@ plugins {
 }
 
 
+kotlin {
+    sourceSets {
+        val vendor by creating {
+            kotlin.srcDir("src/vendor")
+        }
+        getByName("main") {
+            dependsOn(vendor)
+        }
+    }
+}
+
+
+intellij {
+    // <https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html>
+    version.set(properties("platformVersion"))
+    updateSinceUntilBuild.set(true)
+    downloadSources.set(true)
+}
+
+
+changelog {
+    // <https://github.com/JetBrains/gradle-changelog-plugin>
+    path.set("${project.projectDir}/CHANGELOG.md")
+    header.set(provider { "[${version.get()}] - ${date()}" })
+    itemPrefix.set("-")
+    unreleasedTerm.set("[Unreleased]")
+    groups.set(listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"))
+}
+
+
 repositories {
     mavenCentral()
     maven {
@@ -96,22 +126,4 @@ tasks {
         dependsOn(verifyPluginConfiguration)
         dependsOn(runPluginVerifier)
     }
-}
-
-
-intellij {
-    // <https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html>
-    version.set(properties("platformVersion"))
-    updateSinceUntilBuild.set(true)
-    downloadSources.set(true)
-}
-
-
-changelog {
-    // <https://github.com/JetBrains/gradle-changelog-plugin>
-    path.set("${project.projectDir}/CHANGELOG.md")
-    header.set(provider { "[${version.get()}] - ${date()}" })
-    itemPrefix.set("-")
-    unreleasedTerm.set("[Unreleased]")
-    groups.set(listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"))
 }
