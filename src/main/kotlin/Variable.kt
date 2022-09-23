@@ -21,7 +21,7 @@ internal val Variable.calendar : Calendar?
  */
 internal val Variable.typeString : String
     get() {
-        val typeString = if (isArrayString) "char[${shape.last()}]" else dataType.name.toLowerCase()
+        val typeString = if (isArrayString) "char[${shape.last()}]" else dataType.name.lowercase()
         return if (isTime) "time<${typeString}>" else typeString
     }
 
@@ -45,7 +45,7 @@ internal val Variable.isTime : Boolean
     get() {
         val name = fullNameEscaped.split("/").last()
         val regex = CalendarDateUnit.udunitPatternString.toRegex()
-        val isTimeUnits = unitsString?.let { regex.matches(it.toLowerCase()) }
+        val isTimeUnits = unitsString?.let { regex.matches(it.lowercase()) }
         return name.startsWith("time", 0) && dataType.isNumeric && isTimeUnits == true
     }
 
@@ -58,7 +58,7 @@ internal val Variable.isTime : Boolean
  * @see <a href=http://www.bic.mni.mcgill.ca/users/sean/Docs/netcdf/guide.txn_58.html>Reading and Writing Character String Values</a>
  */
 internal val Variable.isArrayString: Boolean
-    get() = dataType.name.toLowerCase() == "char" && shape.size == 2
+    get() = dataType.name.lowercase() == "char" && shape.size == 2
 
 
 /**
