@@ -1,22 +1,23 @@
 /**
- * Common Data Langauge (CDL) file support.
+ * NetCDF Markup Language (NcML) files.
+ *
+ * @see <a href="https://www.unidata.ucar.edu/software/netcdf-java/v4.6/ncml"></a>
  */
-package software.mdklatt.idea.netcdf.files
+package dev.mdklatt.idea.netcdf.files
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.UserFileType
 import com.intellij.openapi.options.SettingsEditor
 
-
 /**
- * CDL file type.
+ * NCML file type.
  *
  * @see: <a href="https://plugins.jetbrains.com/docs/intellij/registering-file-type.html">Registering a File Type</a>
  */
-class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
+class NcmlFileType: UserFileType<NcmlFileType>() {  // TODO: LanguageFileType
 
     companion object {
-        val INSTANCE = CdlFileType()
+        val INSTANCE = NcmlFileType()
     }
 
     /**
@@ -26,22 +27,21 @@ class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
      *
      * @return: name
      */
-    override fun getName() = "CDL"
+    override fun getName() = "NcML"
 
     /**
      * Default file extension.
      *
      * @return extension
      */
-    override fun getDefaultExtension() = "cdl"
+    override fun getDefaultExtension() = "ncml"
 
     /**
      * File type description.
      *
      * @return description
      */
-    override fun getDescription() = "Common Data Language (CDL)"
-
+    override fun getDescription() = "NetCDF Markup Language (NcML)"
 
     /**
      * Returns the 16x16 icon used to represent the file type.
@@ -61,7 +61,7 @@ class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
     /**
      *
      */
-    override fun getEditor(): SettingsEditor<CdlFileType> {
+    override fun getEditor(): SettingsEditor<NcmlFileType> {
         TODO("Not yet implemented")
     }
 }

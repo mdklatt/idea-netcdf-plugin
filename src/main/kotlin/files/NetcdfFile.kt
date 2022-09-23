@@ -3,7 +3,7 @@
  *
  * @see: <a href="https://www.unidata.ucar.edu/software/netcdf">netCDF</a>
  */
-package software.mdklatt.idea.netcdf.files
+package dev.mdklatt.idea.netcdf.files
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.UserBinaryFileType

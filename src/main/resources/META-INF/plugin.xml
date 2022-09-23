@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>software.mdklatt.idea.netcdf</id>
+    <id>dev.mdklatt.idea.netcdf</id>
     <name>NetCDF</name>
     <vendor email="mdklatt@alumni.ou.edu" url="https://github.com/mdklatt/idea-netcdf-plugin">Michael Klatt</vendor>
 
@@ -8,8 +8,8 @@
     <depends>com.intellij.modules.platform</depends>
 
     <actions>
-        <action id="software.mdklatt.idea.netcdf.OpenNetcdfViewer"
-                class="software.mdklatt.idea.netcdf.OpenNetcdfViewer"
+        <action id="dev.mdklatt.idea.netcdf.OpenNetcdfViewer"
+                class="dev.mdklatt.idea.netcdf.OpenNetcdfViewer"
                 text="Open NetCDF Viewer"
                 description="Open file in the NetCDF Viewer">
             <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
@@ -17,10 +17,9 @@
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <configurationType implementation="software.mdklatt.idea.netcdf.configurations.HelloConfigurationType"/>
-        <fileType name="netCDF" implementationClass="software.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
-        <fileType name="CDL" implementationClass="software.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
-        <fileType name="NcML" implementationClass="software.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
+        <fileType name="netCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
+        <fileType name="CDL" implementationClass="dev.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
+        <fileType name="NcML" implementationClass="dev.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
     </extensions>
 
 </idea-plugin>

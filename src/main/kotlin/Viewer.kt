@@ -1,7 +1,7 @@
 /**
  * Implementation of the NetCDF Viewer tool.
  */
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,7 +18,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
-import software.mdklatt.idea.netcdf.files.NetcdfFileType
+import dev.mdklatt.idea.netcdf.files.NetcdfFileType
 import ucar.nc2.NetcdfFile
 import java.awt.Font
 import javax.swing.JComponent

@@ -1,7 +1,7 @@
 /**
  * Extensions for the ucar.nc2.Variable class
  */
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import ucar.nc2.Dimension
 import ucar.nc2.Variable

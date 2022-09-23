@@ -1,7 +1,7 @@
 /**
- * Unit tests for the NcmlFile module.
+ * Unit tests for the CdlFile module.
  */
-package software.mdklatt.idea.netcdf.files
+package dev.mdklatt.idea.netcdf.files
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -10,18 +10,18 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Unit tests for the NcmlFileType class.
+ * Unit tests for the CdlFileType class.
  */
-internal class NcmlFileTypeTest {
+internal class CdlFileTypeTest {
 
-    private var type = NcmlFileType()
+    private var type = CdlFileType()
 
     /**
      * Test the defaultExtension property.
      */
     @Test
     fun testDefaultExtenstion() {
-        assertEquals("ncml", type.defaultExtension)
+        assertEquals("cdl", type.defaultExtension)
     }
 
     /**

@@ -1,7 +1,7 @@
 /**
  * Unit tests for the NetcdfViewer module.
  */
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Viewer module.
  */
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import org.junit.jupiter.api.Test
 import ucar.nc2.NetcdfFile

@@ -1,4 +1,4 @@
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import ucar.nc2.AttributeContainer
 import ucar.nc2.CDMNode

@@ -1,7 +1,7 @@
 /**
  * Unit tests for Variable.kt
  */
-package software.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,7 +1,7 @@
 /**
  * Unit tests for the NetcdFile module.
  */
-package software.mdklatt.idea.netcdf.files
+package dev.mdklatt.idea.netcdf.files
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
