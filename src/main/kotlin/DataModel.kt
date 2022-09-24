@@ -1,21 +1,23 @@
 package dev.mdklatt.idea.netcdf
 
+import com.intellij.openapi.diagnostic.Logger
+import java.lang.IllegalStateException
+import javax.swing.table.AbstractTableModel
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
 import vendor.tandrial.itertools.cartProd
-import java.lang.IllegalStateException
 
 
 /**
  * Represent n-dimensional netCDF variables as a two-dimensional table where
  * variables are mapped to columns in flattened row-major order.
 */
-internal class DataView(private var file: NetcdfFile) {
+internal class DataModel : AbstractTableModel() {
     /**
      * Define a table column.
      */
-    abstract inner class Column(val label: String) {
+    abstract class Column(val label: String) {
         /**
          * Data type represented by this column.
          */
@@ -28,6 +30,22 @@ internal class DataView(private var file: NetcdfFile) {
          * @return: column value
          */
         abstract fun value(row: Int) : Any
+    }
+
+    /**
+     *
+     */
+    inner class IndexColumn(label: String, private val axis: Int) : Column(label) {
+
+        override val type = Int::class.java
+
+        /**
+         * Get a single column value.
+         *
+         * @param row: row index
+         * @return: column value
+         */
+        override fun value(row: Int) = index[row][axis]
     }
 
     /**
@@ -123,6 +141,8 @@ internal class DataView(private var file: NetcdfFile) {
         }
     }
 
+    private val logger = Logger.getInstance(this::class.java)
+    private var file: NetcdfFile? = null
     private var dimensions = emptyList<Dimension>()
     private var index : List<IntArray> = emptyList()
     private var columns = mutableListOf<Column>()
@@ -130,73 +150,57 @@ internal class DataView(private var file: NetcdfFile) {
     val labels : List<String>
         get() = columns.map { it.label }.toList()
 
-    val rowCount : Int
-        get() = index.size
 
-    val columnCount : Int
-        get() = labels.size
+    /**
+     * Set the model data.
+     *
+     * The model defines columns consisting of one or more netCDF variables and
+     * their corresponding dimension coordinates. All selected variable must
+     * have congruent dimensions.
+     *
+     * @param file: open netCDF file
+     * @param varNames: variable names to use
+     */
+    fun setData(file: NetcdfFile, varNames: Sequence<String>) {
+        logger.debug("Loading data from ${file.location}")
+        resetData()
+        this.file = file
+        varNames.forEach { addVariable(it) }
+        fireTableStructureChanged()
+    }
 
     /**
      * Add a variable as a new data column if it does not already exist in the
      * table.
      *
-     * @param name: fully-escaped variable name
+     * @param variable: netCDF variable
      */
-    fun add(name: String) {
-        val variable = file.findVariable(name) ?: throw IllegalArgumentException("unknown variable: $name")
+    fun addVariable(name: String) {
+        val variable = file?.findVariable(name) ?: throw IllegalArgumentException("Invalid variable: $name")
         if (dimensions.isEmpty()) {
             dimensions = variable.publicDimensions
             dimensions.forEach { addCoordinateColumn(it) }
             val shape = dimensions.map { (0 until it.length) }.toTypedArray()
             index = if (shape.isEmpty()) emptyList() else cartProd(*shape).map { it.toIntArray() }.toList()
-        } else if (!congruent(variable)) {
-            throw IllegalArgumentException("cannot add incongruent variable '${name}' to table")
+        } else if (!isCongruent(variable)) {
+            throw IllegalArgumentException("Cannot add incongruent variable '${name}' to table")
         }
         if (columns.find { it.label == name } == null) {
             // Exclude duplicates, including variables that are already present
             // as coordinate variables.
             addVariableColumn(variable)
         }
-        return
-    }
-
-    /** @overload */
-    fun add(names: Sequence<String>) {
-        names.toSet().forEach { add(it) }
-        return
-    }
-
-    /** @overload */
-    fun add(vararg names: String) {
-        add(names.asSequence())
-        return
     }
 
     /**
      * Clear all columns from the table.
      */
-    fun clear() {
+    fun resetData() {
         dimensions = emptyList()
         columns.clear()
         index = emptyList()
+        file = null
     }
-
-    /**
-     * Get a column by index.
-     *
-     * @param index: column index
-     * @return: selected column
-     */
-    fun column(index: Int) = columns[index]
-
-    /**
-     * Find a column by label. An IllegalArgumentException is thrown if the
-     * label cannot be found.
-     *
-     * @param label: column label
-     * @return: selected column
-     */
-    fun column(label: String) = columns.find { it.label == label } ?: throw IllegalArgumentException("unknown column: $label")
 
     /**
      * Test if a variable has the same dimensions as the current table
@@ -204,7 +208,7 @@ internal class DataView(private var file: NetcdfFile) {
      *
      * @return: true if the variable is compatible
      */
-    private fun congruent(variable: Variable) : Boolean {
+    private fun isCongruent(variable: Variable) : Boolean {
         return setOf(dimensions) == setOf(variable.publicDimensions)
     }
 
@@ -217,16 +221,11 @@ internal class DataView(private var file: NetcdfFile) {
      * @param dimension: dimension to add a coordinate column for
      */
     private fun addCoordinateColumn(dimension: Dimension) {
-        val variable = file.findVariable(dimension.fullNameEscaped)
+        val variable = file?.findVariable(dimension.fullNameEscaped)
         if (variable?.isCoordinateVariable != true) {
             // No coordinate variable for this dimension.
             val axis = dimensions.indexOf(dimension)
-            val column = object : Column(dimension.fullNameEscaped) {
-                // Numeric index.
-                override val type = Long::class.java
-                override fun value(row: Int) = index[row][axis]
-            }
-            columns.add(column)
+            columns.add(IndexColumn(dimension.fullNameEscaped, axis))
         } else {
             addVariableColumn(variable)
         }
@@ -247,4 +246,49 @@ internal class DataView(private var file: NetcdfFile) {
         }
         columns.add(column)
     }
+
+    /**
+     * Returns the number of rows in the model. A
+     * `JTable` uses this method to determine how many rows it
+     * should display.  This method should be quick, as it
+     * is called frequently during rendering.
+     *
+     * @return the number of rows in the model
+     * @see .getColumnCount
+     */
+    override fun getRowCount() = index.size
+
+    /**
+     * Returns the number of columns in the model. A
+     * `JTable` uses this method to determine how many columns it
+     * should create and display by default.
+     *
+     * @return the number of columns in the model
+     * @see .getRowCount
+     */
+    override fun getColumnCount() = labels.size
+
+    /**
+     *
+     */
+    override fun getColumnClass(columnIndex: Int): Class<*> =
+        columns[columnIndex].type
+
+    /**
+     * Get the name label for a column.
+     */
+    override fun getColumnName(columnIndex: Int) =
+        columns[columnIndex].label
+
+    /**
+     * Returns the value for the cell at `columnIndex` and
+     * `rowIndex`.
+     *
+     * @param   rowIndex        the row whose value is to be queried
+     * @param   columnIndex     the column whose value is to be queried
+     * @return  the value Object at the specified cell
+     */
+    override fun getValueAt(rowIndex: Int, columnIndex: Int) =
+        columns[columnIndex].value(rowIndex)
 }
+

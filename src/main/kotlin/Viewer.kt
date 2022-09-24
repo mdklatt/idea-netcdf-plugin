@@ -20,26 +20,22 @@ import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
 import ucar.nc2.NetcdfFile
+import java.awt.Color
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionEvent
-import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.DefaultTreeSelectionModel
-import javax.swing.tree.TreePath
+import javax.swing.tree.*
 import javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
-import kotlin.sequences.Sequence
 
 
 private const val TITLE = "NetCDF Viewer"
 
 
 /**
- * Handler for the "Open NetCDF Viewer" action.
+ * Handler for the "Open in NetCDF Viewer" action.
  */
-class OpenNetcdfViewer : AnAction() {
+class OpenViewerAction : AnAction() {
     /**
      * Load the selected netCDF file into the tool window.
      *
@@ -160,6 +156,9 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
         selectionModel = SelectionModel()
         selectionModel.selectionMode = DISCONTIGUOUS_TREE_SELECTION
         addTreeSelectionListener(this::selectionListener)
+        setCellRenderer(DefaultTreeCellRenderer().also {
+            it.backgroundSelectionColor = Color.WHITE
+        })
     }
 
     override fun dispose() {
@@ -176,14 +175,13 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             head.add(node)
         }
         group.attributes.forEach { node.add(DefaultMutableTreeNode(it)) }
-        addVariables(node, group.variables)
         if (group.groups.count() > 0) {
             DefaultMutableTreeNode("Groups").let {
                 node.add(it)
                 group.groups.forEach { sub -> addGroup(it, sub) }
             }
         }
-        return
+        addVariables(node, group.variables)
     }
 
     private fun addVariables(head: DefaultMutableTreeNode, items: Sequence<FileView.Variable>) {
@@ -228,7 +226,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
         if (variables.map { it.dimensions.joinToString(",") }.toSet().size > 1) {
             Messages.showMessageDialog(
                 component,
-                "All selected variables must have compatible dimensions",
+                "Selected variables have different dimensions",
                 TITLE,
                 Messages.getErrorIcon()
             )
@@ -275,7 +273,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
 /**
  * Display variable data.
  */
-internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ViewerTab {
+internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), ViewerTab {
 
     override val title = "Data"
     override val description = "Selected variables"
@@ -303,7 +301,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ViewerT
     }
 
     override fun dispose() {
-        (model as Model).clear()
+        (model as DataModel).resetData()
         return
     }
 
@@ -314,7 +312,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ViewerT
         if (displayedVars == fileTab.selectedVars) {
             return  // selected variables are already displayed
         }
-        (model as Model).setData(fileTab.file, fileTab.selectedVars.asSequence())
+        (model as DataModel).setData(fileTab.file, fileTab.selectedVars.asSequence())
         displayedVars = fileTab.selectedVars
         formatColumns()
         return
@@ -345,84 +343,6 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(Model()), ViewerT
                     super.setFont(font?.deriveFont(cellStyle))
                 }
             }
-        }
-        return
-    }
-
-    /**
-     * Data model for rendering a DataView table.
-     */
-    class Model : AbstractTableModel() {
-
-        private val logger = Logger.getInstance(this::class.java)
-        var view: DataView? = null
-
-        /**
-         * Returns the number of rows in the model. A
-         * `JTable` uses this method to determine how many rows it
-         * should display.  This method should be quick, as it
-         * is called frequently during rendering.
-         *
-         * @return the number of rows in the model
-         * @see .getColumnCount
-         */
-        override fun getRowCount() = view?.rowCount ?: 0
-
-        /**
-         * Returns the number of columns in the model. A
-         * `JTable` uses this method to determine how many columns it
-         * should create and display by default.
-         *
-         * @return the number of columns in the model
-         * @see .getRowCount
-         */
-        override fun getColumnCount() = view?.columnCount ?: 0
-
-        /**
-         *
-         */
-        override fun getColumnClass(columnIndex: Int): Class<*> =
-            view?.column(columnIndex)?.type ?: throw IllegalStateException("empty table")
-
-        /**
-         * Get the name label for a column.
-         *
-         */
-        override fun getColumnName(column: Int) =
-            view?.column(column)?.label ?: throw IllegalStateException("empty table")
-
-        /**
-         * Returns the value for the cell at `columnIndex` and
-         * `rowIndex`.
-         *
-         * @param   rowIndex        the row whose value is to be queried
-         * @param   columnIndex     the column whose value is to be queried
-         * @return  the value Object at the specified cell
-         */
-        override fun getValueAt(rowIndex: Int, columnIndex: Int) =
-            view?.column(columnIndex)?.value(rowIndex) ?: throw IllegalStateException("empty table")
-
-        /**
-         * Set the model data.
-         *
-         * The model defines columns consisting of one or more netCDF variables and
-         * their corresponding dimension coordinates. All selected variable must
-         * have congruent dimensions.
-         *
-         * @param file: open netCDF file
-         * @param varNames: variable names to use
-         */
-        fun setData(file: NetcdfFile, varNames: Sequence<String>) {
-            // TODO: Verify that all variables have the same dimensions.
-            logger.debug("Loading data from ${file.location}")
-            clear()  // TODO: is this necessary?
-            view = DataView(file).also { it.add(varNames) }
-            fireTableStructureChanged()
-            return
-        }
-
-        fun clear() {
-            view?.clear()
         }
     }
 }

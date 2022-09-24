@@ -8,9 +8,9 @@
     <depends>com.intellij.modules.platform</depends>
 
     <actions>
-        <action id="dev.mdklatt.idea.netcdf.OpenNetcdfViewer"
-                class="dev.mdklatt.idea.netcdf.OpenNetcdfViewer"
-                text="Open NetCDF Viewer"
+        <action id="dev.mdklatt.idea.netcdf.OpenViewerAction"
+                class="dev.mdklatt.idea.netcdf.OpenViewerAction"
+                text="Open in NetCDF Viewer"
                 description="Open file in the NetCDF Viewer">
             <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
         </action>
