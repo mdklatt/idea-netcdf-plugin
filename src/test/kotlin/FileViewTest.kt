@@ -34,8 +34,8 @@ internal class FileViewTest {
     fun testVariables() {
         val labels = view.root.variables.map { it.toString() }
         assertEquals(12, labels.count())
-        assertEquals("area (float)", labels.first())
-        assertEquals("ua (float)", labels.last())
+        assertEquals("area: float[128, 256]", labels.first())
+        assertEquals("ua: float[1, 17, 128, 256]", labels.last())
         return
     }
 }

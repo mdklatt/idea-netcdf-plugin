@@ -48,15 +48,25 @@ internal class FileView(file: NetcdfFile) {
     class Variable(variable: ucar.nc2.Variable) : Node<ucar.nc2.Variable>(variable) {
         /** Variable dimensions. */
         val dimensions: Sequence<String>
-            // TODO: sizes and is unlimited
-            get() = fileNode.publicDimensions.map { it.fullNameEscaped }.asSequence()
+            get() {
+                return fileNode.publicDimensions.map {
+                    val unlimited = if (it.isUnlimited) "(unlimited)" else ""
+                    "${it.fullNameEscaped}[${it.length}] $unlimited"
+                }.asSequence()
+            }
+
+        private val shape: Sequence<Int>
+            get() = fileNode.publicDimensions.map { it.length }.asSequence()
 
         /**
          * String representation.
          *
          * @return: string value
          */
-        override fun toString() = "${fileNode.nameEscaped} (${fileNode.typeString})"
+        override fun toString(): String {
+            val dims = shape.map { it.toString() }.joinToString(", ")
+            return "${fileNode.nameEscaped}: ${fileNode.typeString}[${dims}]"
+        }
     }
 
     /** File root group. */
