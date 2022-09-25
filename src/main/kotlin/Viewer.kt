@@ -81,7 +81,6 @@ class OpenViewerAction : AnAction() {
     private fun open(project: Project, path: String) {
         val window = getWindow(project)
         window.contentManager.removeAllContents(true)
-        //val fileTab = FileTab(path)
         val fileTab = FileTab(path)
         val dataTab = DataTab(fileTab)
         listOf(fileTab, dataTab).forEach { it.addContent(window) }
@@ -145,14 +144,12 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
     val file: NetcdfFile = NetcdfFile.open(path)
     var selectedVars = emptyList<String>()
 
-    private var view = FileView(file)
-    private var root = DefaultMutableTreeNode(file.location).also {
-        model = DefaultTreeModel(it)
-        addGroup(it, view.root)
-        expandPath(TreePath(it))
-    }
     init {
-        logger.debug("Loading schema from ${file.location}")
+        logger.debug("Loading s${file.location} in viewer")
+        this.model = FileModel().also {
+            it.fillTree(file)
+            expandPath(TreePath(it.root))
+        }
         selectionModel = SelectionModel()
         selectionModel.selectionMode = DISCONTIGUOUS_TREE_SELECTION
         addTreeSelectionListener(this::selectionListener)
@@ -162,55 +159,10 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
     }
 
     override fun dispose() {
-        root.removeAllChildren()
+        (model as FileModel).clearTree()
         file.close()
     }
 
-    private fun addGroup(head: DefaultMutableTreeNode, group: FileView.Group) {
-        val node: DefaultMutableTreeNode
-        if (group.isRoot) {
-            node = head
-        } else {
-            node = DefaultMutableTreeNode(group)
-            head.add(node)
-        }
-        group.attributes.forEach { node.add(DefaultMutableTreeNode(it)) }
-        if (group.groups.count() > 0) {
-            DefaultMutableTreeNode("Groups").let {
-                node.add(it)
-                group.groups.forEach { sub -> addGroup(it, sub) }
-            }
-        }
-        addVariables(node, group.variables)
-    }
-
-    private fun addVariables(head: DefaultMutableTreeNode, items: Sequence<FileView.Variable>) {
-        if (items.count() == 0) {
-            return
-        }
-        DefaultMutableTreeNode("Variables").let { node ->
-            head.add(node)
-            items.forEach {
-                DefaultMutableTreeNode(it).apply {
-                    node.add(this)
-                    it.attributes.forEach { this.add(DefaultMutableTreeNode(it)) }
-                    addDimensions(this, it.dimensions)
-                }
-            }
-        }
-        return
-    }
-
-    private fun addDimensions(head: DefaultMutableTreeNode, items: Sequence<String>) {
-        if (items.count() == 0) {
-            return
-        }
-        DefaultMutableTreeNode("Dimensions").let { node ->
-            head.add(node)
-            items.forEach { node.add(DefaultMutableTreeNode(it)) }
-        }
-        return
-    }
 
     /**
      * Handle node selection events.
@@ -221,7 +173,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             return
         }
         val variables = getSelectedNodes(DefaultMutableTreeNode::class.java, null).mapNotNull {
-            it.userObject as? FileView.Variable
+            it.userObject as? FileModel.Variable
         }
         if (variables.map { it.dimensions.joinToString(",") }.toSet().size > 1) {
             Messages.showMessageDialog(
@@ -248,7 +200,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
          */
         override fun setSelectionPath(path: TreePath?) {
             val node = path?.lastPathComponent as DefaultMutableTreeNode
-            if (node.userObject is FileView.Variable) {
+            if (node.userObject is FileModel.Variable) {
                 super.setSelectionPath(path)
             }
             return
@@ -261,7 +213,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
          */
         override fun addSelectionPath(path: TreePath?) {
             val node = path?.lastPathComponent as DefaultMutableTreeNode
-            if (node.userObject is FileView.Variable) {
+            if (node.userObject is FileModel.Variable) {
                 super.addSelectionPath(path)
             }
             return
