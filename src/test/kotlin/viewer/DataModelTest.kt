@@ -36,7 +36,6 @@ internal class DataModelTest {
     fun testLabels() {
         model.fillTable(file, sequenceOf("pr", "tas"))
         assertEquals(labels, model.labels)
-        return
     }
 
     /**
@@ -48,7 +47,6 @@ internal class DataModelTest {
         assertTrue(model.labels.isEmpty())
         assertEquals(0, model.rowCount)
         assertEquals(0, model.columnCount)
-        return
     }
 
     /**

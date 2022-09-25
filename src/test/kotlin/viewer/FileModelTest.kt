@@ -38,6 +38,5 @@ internal class FileModelTest {
         assertEquals("Variables", variablesNode.toString())
         assertEquals(12, model.getChildCount(variablesNode))
         assertEquals("area: float[128, 256]", model.getChild(variablesNode, 0).toString())
-        return
     }
 }

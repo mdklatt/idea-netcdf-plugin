@@ -123,9 +123,7 @@ private interface ViewerTab {
     /**
      * Dispose of tab resources when it is closed.
      */
-    fun dispose() {
-        return
-    }
+    fun dispose()
 }
 
 
