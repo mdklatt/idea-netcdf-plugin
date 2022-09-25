@@ -1,7 +1,7 @@
 /**
  * Implementation of the NetCDF Viewer tool.
  */
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -56,7 +56,6 @@ class OpenViewerAction : AnAction() {
                 Messages.getErrorIcon()
             )
         }
-        return
     }
 
     private fun getWindow(project: Project) : ToolWindow {
@@ -85,7 +84,6 @@ class OpenViewerAction : AnAction() {
         val dataTab = DataTab(fileTab)
         listOf(fileTab, dataTab).forEach { it.addContent(window) }
         window.show()
-        return
     }
 }
 
@@ -203,7 +201,6 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             if (node.userObject is FileModel.Variable) {
                 super.setSelectionPath(path)
             }
-            return
         }
 
         /**
@@ -216,7 +213,6 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             if (node.userObject is FileModel.Variable) {
                 super.addSelectionPath(path)
             }
-            return
         }
     }
 }
@@ -254,7 +250,6 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
 
     override fun dispose() {
         (model as DataModel).clearTable()
-        return
     }
 
     /**
@@ -267,7 +262,6 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
         (model as DataModel).fillTable(fileTab.file, fileTab.selectedVars.asSequence())
         displayedVars = fileTab.selectedVars
         formatColumns()
-        return
     }
 
     /**

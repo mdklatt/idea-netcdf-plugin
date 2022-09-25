@@ -1,7 +1,7 @@
 /**
  * Unit tests for DataModel.kt
  */
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
 import org.junit.jupiter.api.AfterEach
 import kotlin.test.Test

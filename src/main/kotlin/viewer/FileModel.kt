@@ -1,11 +1,10 @@
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
-import ucar.nc2.AttributeContainer
-import ucar.nc2.CDMNode
-import ucar.nc2.NetcdfFile
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import ucar.nc2.*
 import kotlin.sequences.Sequence
+import dev.mdklatt.idea.netcdf.*
 
 
 /**

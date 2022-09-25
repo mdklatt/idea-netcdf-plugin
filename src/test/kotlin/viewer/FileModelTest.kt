@@ -1,7 +1,7 @@
 /**
  * Unit tests for the FileModel.kt;
  */
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

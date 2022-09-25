@@ -1,7 +1,7 @@
 /**
  * Unit tests for Viewer.kt.
  */
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
 
 // TODO

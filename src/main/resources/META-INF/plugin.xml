@@ -13,7 +13,7 @@
         popup="true">
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
       <action id="dev.mdklatt.idea.netcdf.OpenViewerAction"
-              class="dev.mdklatt.idea.netcdf.OpenViewerAction"
+              class="dev.mdklatt.idea.netcdf.viewer.OpenViewerAction"
               text="Open in Viewer"
               description="Open file in the NetCDF Viewer">
       </action>

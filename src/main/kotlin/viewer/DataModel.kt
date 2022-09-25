@@ -1,4 +1,4 @@
-package dev.mdklatt.idea.netcdf
+package dev.mdklatt.idea.netcdf.viewer
 
 import com.intellij.openapi.diagnostic.Logger
 import java.lang.IllegalStateException
@@ -7,7 +7,7 @@ import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
 import vendor.tandrial.itertools.cartProd
-
+import dev.mdklatt.idea.netcdf.*
 
 /**
  * Represent n-dimensional netCDF variables as a two-dimensional table where
