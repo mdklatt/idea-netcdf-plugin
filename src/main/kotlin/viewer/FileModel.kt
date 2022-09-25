@@ -16,12 +16,12 @@ internal class FileModel() : DefaultTreeModel(null) {
      */
     abstract class Node<out T>(protected val fileNode: T) where T: CDMNode, T: AttributeContainer {
         /** Node display label. */
-        open val name: String = fileNode.fullNameEscaped
+        open val name: String = fileNode.shortName
 
         /** Node attributes. */
         val attributes: Sequence<String>
-            get() = fileNode.attributes.sortedBy { it.fullNameEscaped }.map {
-                "${it.fullNameEscaped}: ${it.stringValue}"
+            get() = fileNode.attributes.sortedBy { it.fullName }.map {
+                "${it.fullName}: ${it.stringValue}"
             }.asSequence()
 
         /**
@@ -52,7 +52,7 @@ internal class FileModel() : DefaultTreeModel(null) {
             get() {
                 return fileNode.publicDimensions.map {
                     val unlimited = if (it.isUnlimited) "(unlimited)" else ""
-                    "${it.fullNameEscaped}[${it.length}] $unlimited"
+                    "${it.fullName}[${it.length}] $unlimited"
                 }.asSequence()
             }
 
@@ -66,7 +66,7 @@ internal class FileModel() : DefaultTreeModel(null) {
          */
         override fun toString(): String {
             val dims = shape.map { it.toString() }.joinToString(", ")
-            return "${fileNode.nameEscaped}: ${fileNode.typeString}[${dims}]"
+            return "${fileNode.shortName}: ${fileNode.typeString}[${dims}]"
         }
     }
 

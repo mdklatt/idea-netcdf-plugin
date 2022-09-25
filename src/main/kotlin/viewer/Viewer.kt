@@ -20,6 +20,7 @@ import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
 import ucar.nc2.NetcdfFile
+import ucar.nc2.NetcdfFiles
 import java.awt.Color
 import java.awt.Font
 import javax.swing.JComponent
@@ -137,7 +138,7 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
     override val component = JBScrollPane(this)
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-    val file: NetcdfFile = NetcdfFile.open(path)
+    val file: NetcdfFile = NetcdfFiles.open(path)
     var selectedVars = emptyList<String>()
 
     init {

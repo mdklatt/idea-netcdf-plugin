@@ -6,7 +6,7 @@ package dev.mdklatt.idea.netcdf.viewer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.AfterEach
-import ucar.nc2.NetcdfFile
+import ucar.nc2.NetcdfFiles
 
 
 /**
@@ -15,7 +15,7 @@ import ucar.nc2.NetcdfFile
 internal class FileModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
-    private val file = NetcdfFile.open(path)
+    private val file = NetcdfFiles.open(path)
     private val model = FileModel()
 
     /**

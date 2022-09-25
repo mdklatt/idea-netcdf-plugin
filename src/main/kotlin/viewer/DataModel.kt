@@ -56,7 +56,7 @@ internal class DataModel : AbstractTableModel() {
      *
      * @param variable: netCDF variable
      */
-    open inner class VariableColumn(private val variable: Variable) : Column(variable.fullNameEscaped) {
+    open inner class VariableColumn(private val variable: Variable) : Column(variable.fullName) {
         /** @see Column.type */
         override val type: Class<*> = variable.dataType.primitiveClassType
 
@@ -223,11 +223,11 @@ internal class DataModel : AbstractTableModel() {
      * @param dimension: dimension to add a coordinate column for
      */
     private fun addCoordinateColumn(dimension: Dimension) {
-        val variable = file?.findVariable(dimension.fullNameEscaped)
+        val variable = file?.findVariable(dimension.fullName)
         if (variable?.isCoordinateVariable != true) {
             // No coordinate variable for this dimension.
             val axis = dimensions.indexOf(dimension)
-            columns.add(IndexColumn(dimension.fullNameEscaped, axis))
+            columns.add(IndexColumn(dimension.fullName, axis))
         } else {
             addVariableColumn(variable)
         }

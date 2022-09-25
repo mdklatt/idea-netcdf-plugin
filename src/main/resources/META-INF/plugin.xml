@@ -21,7 +21,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="NetCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
+    <fileType name="netCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
     <fileType name="CDL" implementationClass="dev.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
     <fileType name="NcML" implementationClass="dev.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
   </extensions>

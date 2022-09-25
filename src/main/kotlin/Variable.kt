@@ -43,7 +43,7 @@ internal val Variable.dateUnits : CalendarDateUnit?
  */
 internal val Variable.isTime : Boolean
     get() {
-        val name = fullNameEscaped.split("/").last()
+        val name = fullName.split("/").last()
         val regex = CalendarDateUnit.udunitPatternString.toRegex()
         val isTimeUnits = unitsString?.let { regex.matches(it.lowercase()) }
         return name.startsWith("time", 0) && dataType.isNumeric && isTimeUnits == true
@@ -59,13 +59,6 @@ internal val Variable.isTime : Boolean
  */
 internal val Variable.isArrayString: Boolean
     get() = dataType.name.lowercase() == "char" && shape.size == 2
-
-
-/**
- * Base variable name without group prefixes.
- */
-internal val Variable.nameEscaped: String
-    get() = fullNameEscaped.split("/").last()
 
 
 /**

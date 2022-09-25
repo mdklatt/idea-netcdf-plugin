@@ -7,8 +7,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import ucar.nc2.NetcdfFile
+import ucar.nc2.NetcdfFiles
 
 
 /**
@@ -17,15 +18,15 @@ import ucar.nc2.NetcdfFile
 internal class VariableTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
-    private val file = NetcdfFile.open(path)
+    private val file = NetcdfFiles.open(path)
 
     /**
      * Test the calendar extension property.
      */
     @Test
     fun testCalendar() {
-        assertEquals("noleap", file.findVariable("time").calendar?.name)
-        assertNull(file.findVariable("pr").calendar)
+        assertEquals("noleap", file.findVariable("time")?.calendar?.name)
+        assertNull(file.findVariable("pr")?.calendar)
         return
     }
 
@@ -34,8 +35,8 @@ internal class VariableTest {
      */
     @Test
     fun testTypeString() {
-        assertEquals("float", file.findVariable("pr").typeString)
-        assertEquals("time<double>", file.findVariable("time").typeString)
+        assertEquals("float", file.findVariable("pr")?.typeString)
+        assertEquals("time<double>", file.findVariable("time")?.typeString)
         return
     }
 
@@ -45,8 +46,8 @@ internal class VariableTest {
     @Test
     fun testDateUnits() {
         val time = file.findVariable("time")
-        assertEquals("Day since 0000-01-01T00:00:00Z", time.dateUnits?.toString())
-        assertNull(file.findVariable("pr").dateUnits)
+        assertEquals("Day since 0000-01-01T00:00:00Z", time?.dateUnits?.toString())
+        assertNull(file.findVariable("pr")?.dateUnits)
         return
     }
 
@@ -63,18 +64,8 @@ internal class VariableTest {
      */
     @Test
     fun testIsTime() {
-        assertTrue(file.findVariable("time").isTime)
-        assertFalse(file.findVariable("lat").isTime)
-        return
-    }
-
-    /**
-     * Test the nameEscaped extension property.
-     */
-    @Test
-    fun testNameEscaped() {
-        val variable = file.findVariable("pr")
-        assertEquals("pr", variable.nameEscaped)
+        assertTrue(file.findVariable("time")?.isTime ?: false)
+        assertFalse(file.findVariable("lat")?.isTime ?: false)
         return
     }
 
@@ -85,6 +76,7 @@ internal class VariableTest {
     fun testPublicDimensions() {
         // TODO: Test for array string variable.
         val variable = file.findVariable("pr")
+        assertNotNull(variable)
         assertEquals(variable.dimensions, variable.publicDimensions)
         return
     }

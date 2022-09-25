@@ -7,7 +7,7 @@ import org.junit.jupiter.api.AfterEach
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import ucar.nc2.NetcdfFile
+import ucar.nc2.NetcdfFiles
 
 
 /**
@@ -16,7 +16,7 @@ import ucar.nc2.NetcdfFile
 internal class DataModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
-    private val file = NetcdfFile.open(path)
+    private val file = NetcdfFiles.open(path)
     private val model = DataModel().apply { fillTable(file, sequenceOf("pr", "tas"))}
     private val labels = listOf("time", "lat", "lon", "pr", "tas")
 
