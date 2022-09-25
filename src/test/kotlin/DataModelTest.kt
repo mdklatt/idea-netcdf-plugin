@@ -1,8 +1,9 @@
 /**
- * Unit tests for the NetcdfViewer module.
+ * Unit tests for DataModel.kt
  */
 package dev.mdklatt.idea.netcdf
 
+import org.junit.jupiter.api.AfterEach
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -10,21 +11,30 @@ import ucar.nc2.NetcdfFile
 
 
 /**
- * Unit tests for the DataView class.
+ * Unit tests for the DataModel class.
  */
 internal class DataModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFile.open(path)
-    private val model = DataModel()
+    private val model = DataModel().apply { fillTable(file, sequenceOf("pr", "tas"))}
     private val labels = listOf("time", "lat", "lon", "pr", "tas")
+
+    /**
+     * Per-test cleanup.
+     */
+    @AfterEach
+    fun tearDown() {
+        model.clearTable()
+        file.close()
+    }
 
     /**
      * Test the labels property.
      */
     @Test
     fun testLabels() {
-        model.setData(file, sequenceOf("pr", "tas"))
+        model.fillTable(file, sequenceOf("pr", "tas"))
         assertEquals(labels, model.labels)
         return
     }
@@ -33,9 +43,11 @@ internal class DataModelTest {
      * Test the clear() method.
      */
     @Test
-    fun testResetData() {
-        model.resetData()
+    fun testClearTable() {
+        model.clearTable()
         assertTrue(model.labels.isEmpty())
+        assertEquals(0, model.rowCount)
+        assertEquals(0, model.columnCount)
         return
     }
 
@@ -44,8 +56,7 @@ internal class DataModelTest {
      */
     @Test
     fun testRowCount() {
-        assertEquals(0, model.rowCount)
-        model.setData(file, sequenceOf("pr"))
+        model.fillTable(file, sequenceOf("pr"))
         assertEquals(32768, model.rowCount)
     }
 
@@ -54,8 +65,6 @@ internal class DataModelTest {
      */
     @Test
     fun testColumnCount() {
-        assertEquals(0, model.columnCount)
-        model.setData(file, sequenceOf("pr", "tas"))
         assertEquals(5, model.columnCount)
     }
 
@@ -64,7 +73,6 @@ internal class DataModelTest {
      */
     @Test
     fun testGetColumnName() {
-        model.setData(file, sequenceOf("pr", "tas"))
         assertEquals("time", model.getColumnName(0))
         assertEquals("tas", model.getColumnName(4))
     }
@@ -74,7 +82,6 @@ internal class DataModelTest {
      */
     @Test
     fun testGetColumnClass() {
-        model.setData(file, sequenceOf("pr", "tas"))
         assertEquals(String::class.java, model.getColumnClass(0))
         assertEquals(Float::class.java, model.getColumnClass(4))
     }
@@ -85,7 +92,6 @@ internal class DataModelTest {
     @Test
     fun testGetCellValueAt() {
         // TODO: Add test for fixed-length strings.
-        model.setData(file, sequenceOf("pr", "tas"))
         assertEquals("2000-05-16T12:00:00Z", model.getValueAt(0, 0))
         assertEquals(215.73935f, model.getValueAt(2, 4))
     }

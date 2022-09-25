@@ -1,5 +1,5 @@
 /**
- * Unit tests for the NetcdfViewer module.
+ * Unit tests for the FileModel.kt;
  */
 package dev.mdklatt.idea.netcdf
 
@@ -10,7 +10,7 @@ import ucar.nc2.NetcdfFile
 
 
 /**
- * Unit tests for the FileView class.
+ * Unit tests for the FileModel class.
  */
 internal class FileModelTest {
 

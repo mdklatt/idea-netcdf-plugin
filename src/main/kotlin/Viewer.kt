@@ -253,7 +253,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
     }
 
     override fun dispose() {
-        (model as DataModel).resetData()
+        (model as DataModel).clearTable()
         return
     }
 
@@ -264,12 +264,11 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
         if (displayedVars == fileTab.selectedVars) {
             return  // selected variables are already displayed
         }
-        (model as DataModel).setData(fileTab.file, fileTab.selectedVars.asSequence())
+        (model as DataModel).fillTable(fileTab.file, fileTab.selectedVars.asSequence())
         displayedVars = fileTab.selectedVars
         formatColumns()
         return
     }
-
 
     /**
      * Set column formatting.

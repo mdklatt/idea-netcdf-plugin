@@ -33,7 +33,10 @@ internal class DataModel : AbstractTableModel() {
     }
 
     /**
+     * Table column holding integer indexes for a dimension.
      *
+     * @param label: column label
+     * @param axis: axis index corresponding to the dimension
      */
     inner class IndexColumn(label: String, private val axis: Int) : Column(label) {
 
@@ -125,7 +128,7 @@ internal class DataModel : AbstractTableModel() {
         /** @see VariableColumn.type */
         override val type = String::class.java
 
-        private val units = variable.dateUnits ?: throw IllegalStateException("not a valid time variable")
+        private val units = variable.dateUnits ?: throw IllegalStateException("Not a valid time variable")
 
         /** @see VariableColumn.read */
         override fun value(row: Int) : Any {
@@ -150,9 +153,8 @@ internal class DataModel : AbstractTableModel() {
     val labels : List<String>
         get() = columns.map { it.label }.toList()
 
-
     /**
-     * Set the model data.
+     * Fill the table with netCDF variables.
      *
      * The model defines columns consisting of one or more netCDF variables and
      * their corresponding dimension coordinates. All selected variable must
@@ -161,9 +163,8 @@ internal class DataModel : AbstractTableModel() {
      * @param file: open netCDF file
      * @param varNames: variable names to use
      */
-    fun setData(file: NetcdfFile, varNames: Sequence<String>) {
-        logger.debug("Loading data from ${file.location}")
-        resetData()
+    fun fillTable(file: NetcdfFile, varNames: Sequence<String>) {
+        clearTable()
         this.file = file
         varNames.forEach { addVariable(it) }
         fireTableStructureChanged()
@@ -173,9 +174,10 @@ internal class DataModel : AbstractTableModel() {
      * Add a variable as a new data column if it does not already exist in the
      * table.
      *
-     * @param variable: netCDF variable
+     * @param name: netCDF variable name
      */
     fun addVariable(name: String) {
+        logger.debug("Loading $name variable from ${file?.location}")
         val variable = file?.findVariable(name) ?: throw IllegalArgumentException("Invalid variable: $name")
         if (dimensions.isEmpty()) {
             dimensions = variable.publicDimensions
@@ -195,7 +197,7 @@ internal class DataModel : AbstractTableModel() {
     /**
      * Clear all columns from the table.
      */
-    fun resetData() {
+    fun clearTable() {
         dimensions = emptyList()
         columns.clear()
         index = emptyList()
@@ -269,7 +271,7 @@ internal class DataModel : AbstractTableModel() {
     override fun getColumnCount() = labels.size
 
     /**
-     *
+     * Get the type for a column.
      */
     override fun getColumnClass(columnIndex: Int): Class<*> =
         columns[columnIndex].type
@@ -291,4 +293,3 @@ internal class DataModel : AbstractTableModel() {
     override fun getValueAt(rowIndex: Int, columnIndex: Int) =
         columns[columnIndex].value(rowIndex)
 }
-
