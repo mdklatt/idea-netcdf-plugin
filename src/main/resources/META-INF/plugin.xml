@@ -1,25 +1,29 @@
 <idea-plugin>
-    <id>dev.mdklatt.idea.netcdf</id>
-    <name>NetCDF</name>
-    <vendor email="mdklatt@alumni.ou.edu" url="https://github.com/mdklatt/idea-netcdf-plugin">Michael Klatt</vendor>
+  <id>dev.mdklatt.idea.netcdf</id>
+  <name>NetCDF</name>
+  <vendor email="mdklatt@alumni.ou.edu" url="https://github.com/mdklatt/idea-netcdf-plugin">Michael Klatt</vendor>
 
-    <!-- Product and plugin compatibility requirements -->
-    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
-    <depends>com.intellij.modules.platform</depends>
+  <!-- Product and plugin compatibility requirements -->
+  <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+  <depends>com.intellij.modules.platform</depends>
 
-    <actions>
-        <action id="dev.mdklatt.idea.netcdf.OpenViewerAction"
-                class="dev.mdklatt.idea.netcdf.OpenViewerAction"
-                text="Open in NetCDF Viewer"
-                description="Open file in the NetCDF Viewer">
-            <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
-        </action>
-    </actions>
+  <actions>
+    <group id="dev.mdklatt.idea.netcdf.NetcdfActions"
+        text="NetCDF"
+        popup="true">
+      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="last"/>
+      <action id="dev.mdklatt.idea.netcdf.OpenViewerAction"
+              class="dev.mdklatt.idea.netcdf.OpenViewerAction"
+              text="Open in Viewer"
+              description="Open file in the NetCDF Viewer">
+      </action>
+    </group>
+  </actions>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <fileType name="netCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
-        <fileType name="CDL" implementationClass="dev.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
-        <fileType name="NcML" implementationClass="dev.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
-    </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="NetCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
+    <fileType name="CDL" implementationClass="dev.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
+    <fileType name="NcML" implementationClass="dev.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
+  </extensions>
 
 </idea-plugin>
