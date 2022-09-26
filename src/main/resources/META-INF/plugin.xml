@@ -17,6 +17,11 @@
               text="Open in Viewer"
               description="Open file in the NetCDF Viewer">
       </action>
+      <action id="dev.mdklatt.idea.netcdf.WriteCdlFileAction"
+              class="dev.mdklatt.idea.netcdf.files.WriteCdlFileAction"
+              text="Create CDL File"
+              description="Write file schema to CDL file">
+      </action>
     </group>
   </actions>
 
