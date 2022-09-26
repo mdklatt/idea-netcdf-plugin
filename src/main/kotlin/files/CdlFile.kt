@@ -68,7 +68,7 @@ class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
     override fun isBinary() = false
 
     /**
-     *
+     * Get an editor for this file type.
      */
     override fun getEditor(): SettingsEditor<CdlFileType> {
         TODO("Not yet implemented")
@@ -77,14 +77,14 @@ class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
 
 
 /**
- *
+ * Write netCDF file schema to CDL.
  */
 class WriteCdlFileAction : AnAction() {
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
 
     /**
-     * Write a netCDF file schema to a CDL file.
+     * Execute the action.
      *
      * @param event Carries information on the invocation place
      */
@@ -104,7 +104,7 @@ class WriteCdlFileAction : AnAction() {
     }
 
     /**
-     * Write a netCDF file schema to a CDL file.
+     * Write file schema to a CDL file.
      *
      * @param ncPath: input netCDF file
      * @param cdlPath: output CDL file (prompt user by default)
@@ -117,9 +117,9 @@ class WriteCdlFileAction : AnAction() {
             val dialog = SaveFileDialog("Save CDL File", default = default)
             dialog.getPath() ?: throw IllegalArgumentException("No path selected")
         }
-        val formatter = Formatter(_cdlPath, "UTF-8")
-        CDLWriter.writeCDL(ncFile, formatter, true, _cdlPath)
-        logger.warn("Creating CDL file $_cdlPath")
-        formatter.close()
+        Formatter(_cdlPath, "UTF-8").use {
+            logger.debug("Writing to CDL file $_cdlPath")
+            CDLWriter.writeCDL(ncFile, it, true, _cdlPath)
+        }
     }
 }
