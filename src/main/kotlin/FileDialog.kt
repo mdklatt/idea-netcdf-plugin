@@ -10,7 +10,7 @@ import javax.swing.JComponent
 /**
  * Modal dialog for an output file path.
  */
-class SaveFileDialog(title: String = "Save File", private val prompt: String = "File:", default: String = "") :
+class SaveFileDialog(title: String = "Save File", private val prompt: String = "File", default: String = "") :
     DialogWrapper(false) {
 
     private var path = default

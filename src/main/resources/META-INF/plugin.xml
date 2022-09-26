@@ -22,6 +22,11 @@
               text="Create CDL File"
               description="Write file schema to CDL file">
       </action>
+      <action id="dev.mdklatt.idea.netcdf.WriteNcmlFileAction"
+              class="dev.mdklatt.idea.netcdf.files.WriteNcmlFileAction"
+              text="Create NcML File"
+              description="Write file schema to NcML file">
+      </action>
     </group>
   </actions>
 
