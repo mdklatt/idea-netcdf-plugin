@@ -4,18 +4,8 @@
 package dev.mdklatt.idea.netcdf.files
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.UserFileType
 import com.intellij.openapi.options.SettingsEditor
-import com.intellij.openapi.ui.Messages
-import dev.mdklatt.idea.netcdf.SaveFileDialog
-import java.util.Formatter
-import ucar.nc2.NetcdfFiles
-import ucar.nc2.write.CDLWriter
-import java.lang.IllegalArgumentException
 
 
 /**
@@ -72,54 +62,5 @@ class CdlFileType: UserFileType<CdlFileType>() {  // TODO: LanguageFileType
      */
     override fun getEditor(): SettingsEditor<CdlFileType> {
         TODO("Not yet implemented")
-    }
-}
-
-
-/**
- * Write netCDF file schema to CDL.
- */
-class WriteCdlFileAction : AnAction() {
-
-    private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-
-    /**
-     * Execute the action.
-     *
-     * @param event Carries information on the invocation place
-     */
-    override fun actionPerformed(event: AnActionEvent) {
-        val file = event.getData(CommonDataKeys.PSI_FILE)?.containingFile
-        val path = file?.virtualFile?.canonicalPath
-        if (file?.fileType is NetcdfFileType && path != null) {
-            writeSchema(path)
-        } else {
-            Messages.showMessageDialog(
-                event.project,
-                "Not a netCDF file",
-                event.presentation.text,
-                Messages.getErrorIcon()
-            )
-        }
-    }
-
-    /**
-     * Write file schema to a CDL file.
-     *
-     * @param ncPath: input netCDF file
-     * @param cdlPath: output CDL file (prompt user by default)
-     */
-    internal fun writeSchema(ncPath: String, cdlPath: String = "") {
-        val ncFile = NetcdfFiles.open(ncPath)
-        val _cdlPath = cdlPath.ifEmpty {
-            // Prompt user for CDL output path.
-            val default = ncPath.replace(".nc", ".cdl")  // FIXME: not robust
-            val dialog = SaveFileDialog("Save CDL File", default = default)
-            dialog.getPath() ?: throw IllegalArgumentException("No path selected")
-        }
-        Formatter(_cdlPath, "UTF-8").use {
-            logger.debug("Writing to CDL file $_cdlPath")
-            CDLWriter.writeCDL(ncFile, it, true, _cdlPath)
-        }
     }
 }

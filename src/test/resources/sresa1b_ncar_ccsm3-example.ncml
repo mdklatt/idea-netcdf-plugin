@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2" location="file:sresa1b_ncar_ccsm3-example.nc">
+  <dimension name="lat" length="128" />
+  <dimension name="lon" length="256" />
+  <dimension name="bnds" length="2" />
+  <dimension name="plev" length="17" />
+  <dimension name="time" length="1" isUnlimited="true" />
+  <variable name="area" shape="lat lon" type="float">
+    <attribute name="long_name" value="Surface area" />
+    <attribute name="units" value="meter2" />
+  </variable>
+  <variable name="lat" shape="lat" type="float">
+    <attribute name="long_name" value="latitude" />
+    <attribute name="units" value="degrees_north" />
+    <attribute name="axis" value="Y" />
+    <attribute name="standard_name" value="latitude" />
+    <attribute name="bounds" value="lat_bnds" />
+  </variable>
+  <variable name="lat_bnds" shape="lat bnds" type="double" />
+  <variable name="lon" shape="lon" type="float">
+    <attribute name="long_name" value="longitude" />
+    <attribute name="units" value="degrees_east" />
+    <attribute name="axis" value="X" />
+    <attribute name="standard_name" value="longitude" />
+    <attribute name="bounds" value="lon_bnds" />
+  </variable>
+  <variable name="lon_bnds" shape="lon bnds" type="double" />
+  <variable name="msk_rgn" shape="lat lon" type="int">
+    <attribute name="long_name" value="Mask region" />
+    <attribute name="units" value="bool" />
+  </variable>
+  <variable name="plev" shape="plev" type="double">
+    <attribute name="long_name" value="pressure" />
+    <attribute name="units" value="Pa" />
+    <attribute name="standard_name" value="air_pressure" />
+    <attribute name="positive" value="down" />
+    <attribute name="axis" value="Z" />
+  </variable>
+  <variable name="pr" shape="time lat lon" type="float">
+    <attribute name="comment" value="Created using NCL code CCSM_atmm_2cf.ncl on&#xA; machine eagle163s" />
+    <attribute name="missing_value" type="float" value="1.0E20" />
+    <attribute name="_FillValue" type="float" value="1.0E20" />
+    <attribute name="cell_methods" value="time: mean (interval: 1 month)" />
+    <attribute name="history" value="(PRECC+PRECL)*r[h2o]" />
+    <attribute name="original_units" value="m-1 s-1" />
+    <attribute name="original_name" value="PRECC, PRECL" />
+    <attribute name="standard_name" value="precipitation_flux" />
+    <attribute name="units" value="kg m-2 s-1" />
+    <attribute name="long_name" value="precipitation_flux" />
+    <attribute name="cell_method" value="time: mean" />
+  </variable>
+  <variable name="tas" shape="time lat lon" type="float">
+    <attribute name="comment" value="Created using NCL code CCSM_atmm_2cf.ncl on&#xA; machine eagle163s" />
+    <attribute name="missing_value" type="float" value="1.0E20" />
+    <attribute name="_FillValue" type="float" value="1.0E20" />
+    <attribute name="cell_methods" value="time: mean (interval: 1 month)" />
+    <attribute name="history" value="Added height coordinate" />
+    <attribute name="coordinates" value="height" />
+    <attribute name="original_units" value="K" />
+    <attribute name="original_name" value="TREFHT" />
+    <attribute name="standard_name" value="air_temperature" />
+    <attribute name="units" value="K" />
+    <attribute name="long_name" value="air_temperature" />
+    <attribute name="cell_method" value="time: mean" />
+  </variable>
+  <variable name="time" shape="time" type="double">
+    <attribute name="calendar" value="noleap" />
+    <attribute name="standard_name" value="time" />
+    <attribute name="axis" value="T" />
+    <attribute name="units" value="days since 0000-1-1" />
+    <attribute name="bounds" value="time_bnds" />
+    <attribute name="long_name" value="time" />
+  </variable>
+  <variable name="time_bnds" shape="time bnds" type="double" />
+  <variable name="ua" shape="time plev lat lon" type="float">
+    <attribute name="comment" value="Created using NCL code CCSM_atmm_2cf.ncl on&#xA; machine eagle163s" />
+    <attribute name="missing_value" type="float" value="1.0E20" />
+    <attribute name="cell_methods" value="time: mean (interval: 1 month)" />
+    <attribute name="long_name" value="eastward_wind" />
+    <attribute name="history" value="Interpolated U with NCL 'vinth2p_ecmwf'" />
+    <attribute name="units" value="m s-1" />
+    <attribute name="original_units" value="m s-1" />
+    <attribute name="original_name" value="U" />
+    <attribute name="standard_name" value="eastward_wind" />
+    <attribute name="_FillValue" type="float" value="1.0E20" />
+  </variable>
+  <attribute name="CVS_Id" value="$Id$" />
+  <attribute name="creation_date" value="" />
+  <attribute name="prg_ID" value="Source file unknown Version unknown Date unknown" />
+  <attribute name="cmd_ln" value="bds -x 256 -y 128 -m 23 -o /data/zender/data/dst_T85.nc" />
+  <attribute name="history" value="Tue Oct 25 15:08:51 2005: ncks -O -x -v va -m sresa1b_ncar_ccsm3_0_run1_200001.nc sresa1b_ncar_ccsm3_0_run1_200001.nc&#xA;Tue Oct 25 15:07:21 2005: ncks -d time,0 sresa1b_ncar_ccsm3_0_run1_200001_201912.nc sresa1b_ncar_ccsm3_0_run1_200001.nc&#xA;Tue Oct 25 13:29:43 2005: ncks -d time,0,239 sresa1b_ncar_ccsm3_0_run1_200001_209912.nc /var/www/html/tmp/sresa1b_ncar_ccsm3_0_run1_200001_201912.nc&#xA;Thu Oct 20 10:47:50 2005: ncks -A -v va /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/tas/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_200001_209912.nc&#xA;Wed Oct 19 14:55:04 2005: ncks -F -d time,01,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc&#xA;Wed Oct 19 14:53:28 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_1192_1196.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc&#xA;Wed Oct 19 14:50:38 2005: ncks -F -d time,05,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc&#xA;Wed Oct 19 14:49:45 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2079-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2080-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc&#xA;Created from CCSM3 case b30.040a&#xA; by wgstrand@ucar.edu&#xA; on Wed Nov 17 14:12:57 EST 2004&#xA; &#xA; For all data, added IPCC requested metadata" />
+  <attribute name="table_id" value="Table A1" />
+  <attribute name="title" value="model output prepared for IPCC AR4" />
+  <attribute name="institution" value="NCAR (National Center for Atmospheric &#xA;Research, Boulder, CO, USA)" />
+  <attribute name="source" value="CCSM3.0, version beta19 (2004): &#xA;atmosphere: CAM3.0, T85L26;&#xA;ocean     : POP1.4.3 (modified), gx1v3&#xA;sea ice   : CSIM5.0, T85;&#xA;land      : CLM3.0, gx1v3" />
+  <attribute name="contact" value="ccsm@ucar.edu" />
+  <attribute name="project_id" value="IPCC Fourth Assessment" />
+  <attribute name="Conventions" value="CF-1.0" />
+  <attribute name="references" value="Collins, W.D., et al., 2005:&#xA; The Community Climate System Model, Version 3&#xA; Journal of Climate&#xA; &#xA; Main website: http://www.ccsm.ucar.edu" />
+  <attribute name="acknowledgment" value=" Any use of CCSM data should acknowledge the contribution&#xA; of the CCSM project and CCSM sponsor agencies with the &#xA; following citation:&#xA; 'This research uses data provided by the Community Climate&#xA; System Model project (www.ccsm.ucar.edu), supported by the&#xA; Directorate for Geosciences of the National Science Foundation&#xA; and the Office of Biological and Environmental Research of&#xA; the U.S. Department of Energy.'&#xA;In addition, the words 'Community Climate System Model' and&#xA; 'CCSM' should be included as metadata for webpages referencing&#xA; work using CCSM data or as keywords provided to journal or book&#xA;publishers of your manuscripts.&#xA;Users of CCSM data accept the responsibility of emailing&#xA; citations of publications of research using CCSM data to&#xA; ccsm@ucar.edu.&#xA;Any redistribution of CCSM data must include this data&#xA; acknowledgement statement." />
+  <attribute name="realization" type="int" value="1" />
+  <attribute name="experiment_id" value="720 ppm stabilization experiment (SRESA1B)" />
+  <attribute name="comment" value="This simulation was initiated from year 2000 of &#xA; CCSM3 model run b30.030a and executed on &#xA; hardware cheetah.ccs.ornl.gov. The input external forcings are&#xA;ozone forcing    : A1B.ozone.128x64_L18_1991-2100_c040528.nc&#xA;aerosol optics   : AerosolOptics_c040105.nc&#xA;aerosol MMR      : AerosolMass_V_128x256_clim_c031022.nc&#xA;carbon scaling   : carbonscaling_A1B_1990-2100_c040609.nc&#xA;solar forcing    : Fixed at 1366.5 W m-2&#xA;GHGs             : ghg_ipcc_A1B_1870-2100_c040521.nc&#xA;GHG loss rates   : noaamisc.r8.nc&#xA;volcanic forcing : none&#xA;DMS emissions    : DMS_emissions_128x256_clim_c040122.nc&#xA;oxidants         : oxid_128x256_L26_clim_c040112.nc&#xA;SOx emissions    : SOx_emissions_A1B_128x256_L2_1990-2100_c040608.nc&#xA; Physical constants used for derived data:&#xA; Lv (latent heat of evaporation): 2.501e6 J kg-1&#xA; Lf (latent heat of fusion     ): 3.337e5 J kg-1&#xA; r[h2o] (density of water      ): 1000 kg m-3&#xA; g2kg   (grams to kilograms    ): 1000 g kg-1&#xA; &#xA; Integrations were performed by NCAR and CRIEPI with support&#xA; and facilities provided by NSF, DOE, MEXT and ESC/JAMSTEC." />
+  <attribute name="model_name_english" value="NCAR CCSM" />
+</netcdf>

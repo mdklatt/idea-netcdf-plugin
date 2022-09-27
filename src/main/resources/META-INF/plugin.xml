@@ -18,12 +18,12 @@
               description="Open file in the NetCDF Viewer">
       </action>
       <action id="dev.mdklatt.idea.netcdf.WriteCdlFileAction"
-              class="dev.mdklatt.idea.netcdf.files.WriteCdlFileAction"
+              class="dev.mdklatt.idea.netcdf.actions.WriteCdlAction"
               text="Create CDL File"
               description="Write file schema to CDL file">
       </action>
       <action id="dev.mdklatt.idea.netcdf.WriteNcmlFileAction"
-              class="dev.mdklatt.idea.netcdf.files.WriteNcmlFileAction"
+              class="dev.mdklatt.idea.netcdf.actions.WriteNcmlAction"
               text="Create NcML File"
               description="Write file schema to NcML file">
       </action>

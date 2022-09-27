@@ -1,223 +1,110 @@
 netcdf sresa1b_ncar_ccsm3-example {
-dimensions:
-	lat = 128 ;
-	lon = 256 ;
-	bnds = 2 ;
-	plev = 17 ;
-	time = UNLIMITED ; // (1 currently)
-variables:
-	float area(lat, lon) ;
-		area:long_name = "Surface area" ;
-		area:units = "meter2" ;
-	float lat(lat) ;
-		lat:long_name = "latitude" ;
-		lat:units = "degrees_north" ;
-		lat:axis = "Y" ;
-		lat:standard_name = "latitude" ;
-		lat:bounds = "lat_bnds" ;
-	double lat_bnds(lat, bnds) ;
-	float lon(lon) ;
-		lon:long_name = "longitude" ;
-		lon:units = "degrees_east" ;
-		lon:axis = "X" ;
-		lon:standard_name = "longitude" ;
-		lon:bounds = "lon_bnds" ;
-	double lon_bnds(lon, bnds) ;
-	int msk_rgn(lat, lon) ;
-		msk_rgn:long_name = "Mask region" ;
-		msk_rgn:units = "bool" ;
-	double plev(plev) ;
-		plev:long_name = "pressure" ;
-		plev:units = "Pa" ;
-		plev:standard_name = "air_pressure" ;
-		plev:positive = "down" ;
-		plev:axis = "Z" ;
-	float pr(time, lat, lon) ;
-		pr:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n",
-			" machine eagle163s" ;
-		pr:missing_value = 1.e+20f ;
-		pr:_FillValue = 1.e+20f ;
-		pr:cell_methods = "time: mean (interval: 1 month)" ;
-		pr:history = "(PRECC+PRECL)*r[h2o]" ;
-		pr:original_units = "m-1 s-1" ;
-		pr:original_name = "PRECC, PRECL" ;
-		pr:standard_name = "precipitation_flux" ;
-		pr:units = "kg m-2 s-1" ;
-		pr:long_name = "precipitation_flux" ;
-		pr:cell_method = "time: mean" ;
-	float tas(time, lat, lon) ;
-		tas:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n",
-			" machine eagle163s" ;
-		tas:missing_value = 1.e+20f ;
-		tas:_FillValue = 1.e+20f ;
-		tas:cell_methods = "time: mean (interval: 1 month)" ;
-		tas:history = "Added height coordinate" ;
-		tas:coordinates = "height" ;
-		tas:original_units = "K" ;
-		tas:original_name = "TREFHT" ;
-		tas:standard_name = "air_temperature" ;
-		tas:units = "K" ;
-		tas:long_name = "air_temperature" ;
-		tas:cell_method = "time: mean" ;
-	double time(time) ;
-		time:calendar = "noleap" ;
-		time:standard_name = "time" ;
-		time:axis = "T" ;
-		time:units = "days since 0000-1-1" ;
-		time:bounds = "time_bnds" ;
-		time:long_name = "time" ;
-	double time_bnds(time, bnds) ;
-	float ua(time, plev, lat, lon) ;
-		ua:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n",
-			" machine eagle163s" ;
-		ua:missing_value = 1.e+20f ;
-		ua:cell_methods = "time: mean (interval: 1 month)" ;
-		ua:long_name = "eastward_wind" ;
-		ua:history = "Interpolated U with NCL \'vinth2p_ecmwf\'" ;
-		ua:units = "m s-1" ;
-		ua:original_units = "m s-1" ;
-		ua:original_name = "U" ;
-		ua:standard_name = "eastward_wind" ;
-		ua:_FillValue = 1.e+20f ;
+  dimensions:
+    lat = 128;
+    lon = 256;
+    bnds = 2;
+    plev = 17;
+    time = UNLIMITED;   // (1 currently)
+  variables:
+    float area(lat, lon);
+      string area:long_name = "Surface area";
+      string area:units = "meter2";
 
-// global attributes:
-		:CVS_Id = "$Id$" ;
-		:creation_date = "" ;
-		:prg_ID = "Source file unknown Version unknown Date unknown" ;
-		:cmd_ln = "bds -x 256 -y 128 -m 23 -o /data/zender/data/dst_T85.nc" ;
-		:history = "Tue Oct 25 15:08:51 2005: ncks -O -x -v va -m sresa1b_ncar_ccsm3_0_run1_200001.nc sresa1b_ncar_ccsm3_0_run1_200001.nc\n",
-			"Tue Oct 25 15:07:21 2005: ncks -d time,0 sresa1b_ncar_ccsm3_0_run1_200001_201912.nc sresa1b_ncar_ccsm3_0_run1_200001.nc\n",
-			"Tue Oct 25 13:29:43 2005: ncks -d time,0,239 sresa1b_ncar_ccsm3_0_run1_200001_209912.nc /var/www/html/tmp/sresa1b_ncar_ccsm3_0_run1_200001_201912.nc\n",
-			"Thu Oct 20 10:47:50 2005: ncks -A -v va /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/tas/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_200001_209912.nc\n",
-			"Wed Oct 19 14:55:04 2005: ncks -F -d time,01,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc\n",
-			"Wed Oct 19 14:53:28 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_1192_1196.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc\n",
-			"Wed Oct 19 14:50:38 2005: ncks -F -d time,05,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc\n",
-			"Wed Oct 19 14:49:45 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2079-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2080-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc\n",
-			"Created from CCSM3 case b30.040a\n",
-			" by wgstrand@ucar.edu\n",
-			" on Wed Nov 17 14:12:57 EST 2004\n",
-			" \n",
-			" For all data, added IPCC requested metadata" ;
-		:table_id = "Table A1" ;
-		:title = "model output prepared for IPCC AR4" ;
-		:institution = "NCAR (National Center for Atmospheric \n",
-			"Research, Boulder, CO, USA)" ;
-		:source = "CCSM3.0, version beta19 (2004): \n",
-			"atmosphere: CAM3.0, T85L26;\n",
-			"ocean     : POP1.4.3 (modified), gx1v3\n",
-			"sea ice   : CSIM5.0, T85;\n",
-			"land      : CLM3.0, gx1v3" ;
-		:contact = "ccsm@ucar.edu" ;
-		:project_id = "IPCC Fourth Assessment" ;
-		:Conventions = "CF-1.0" ;
-		:references = "Collins, W.D., et al., 2005:\n",
-			" The Community Climate System Model, Version 3\n",
-			" Journal of Climate\n",
-			" \n",
-			" Main website: http://www.ccsm.ucar.edu" ;
-		:acknowledgment = " Any use of CCSM data should acknowledge the contribution\n",
-			" of the CCSM project and CCSM sponsor agencies with the \n",
-			" following citation:\n",
-			" \'This research uses data provided by the Community Climate\n",
-			" System Model project (www.ccsm.ucar.edu), supported by the\n",
-			" Directorate for Geosciences of the National Science Foundation\n",
-			" and the Office of Biological and Environmental Research of\n",
-			" the U.S. Department of Energy.\'\n",
-			"In addition, the words \'Community Climate System Model\' and\n",
-			" \'CCSM\' should be included as metadata for webpages referencing\n",
-			" work using CCSM data or as keywords provided to journal or book\n",
-			"publishers of your manuscripts.\n",
-			"Users of CCSM data accept the responsibility of emailing\n",
-			" citations of publications of research using CCSM data to\n",
-			" ccsm@ucar.edu.\n",
-			"Any redistribution of CCSM data must include this data\n",
-			" acknowledgement statement." ;
-		:realization = 1 ;
-		:experiment_id = "720 ppm stabilization experiment (SRESA1B)" ;
-		:comment = "This simulation was initiated from year 2000 of \n",
-			" CCSM3 model run b30.030a and executed on \n",
-			" hardware cheetah.ccs.ornl.gov. The input external forcings are\n",
-			"ozone forcing    : A1B.ozone.128x64_L18_1991-2100_c040528.nc\n",
-			"aerosol optics   : AerosolOptics_c040105.nc\n",
-			"aerosol MMR      : AerosolMass_V_128x256_clim_c031022.nc\n",
-			"carbon scaling   : carbonscaling_A1B_1990-2100_c040609.nc\n",
-			"solar forcing    : Fixed at 1366.5 W m-2\n",
-			"GHGs             : ghg_ipcc_A1B_1870-2100_c040521.nc\n",
-			"GHG loss rates   : noaamisc.r8.nc\n",
-			"volcanic forcing : none\n",
-			"DMS emissions    : DMS_emissions_128x256_clim_c040122.nc\n",
-			"oxidants         : oxid_128x256_L26_clim_c040112.nc\n",
-			"SOx emissions    : SOx_emissions_A1B_128x256_L2_1990-2100_c040608.nc\n",
-			" Physical constants used for derived data:\n",
-			" Lv (latent heat of evaporation): 2.501e6 J kg-1\n",
-			" Lf (latent heat of fusion     ): 3.337e5 J kg-1\n",
-			" r[h2o] (density of water      ): 1000 kg m-3\n",
-			" g2kg   (grams to kilograms    ): 1000 g kg-1\n",
-			" \n",
-			" Integrations were performed by NCAR and CRIEPI with support\n",
-			" and facilities provided by NSF, DOE, MEXT and ESC/JAMSTEC." ;
-		:model_name_english = "NCAR CCSM" ;
-data:
+    float lat(lat);
+      string lat:long_name = "latitude";
+      string lat:units = "degrees_north";
+      string lat:axis = "Y";
+      string lat:standard_name = "latitude";
+      string lat:bounds = "lat_bnds";
 
- lat = -88.92773, -87.5387, -86.14147, -84.74239, -83.3426, -81.94247, 
-    -80.54214, -79.14171, -77.7412, -76.34063, -74.94003, -73.53939, 
-    -72.13873, -70.73806, -69.33737, -67.93668, -66.53596, -65.13525, 
-    -63.73453, -62.3338, -60.93307, -59.53234, -58.1316, -56.73086, 
-    -55.33011, -53.92937, -52.52862, -51.12786, -49.72712, -48.32636, 
-    -46.92561, -45.52485, -44.12409, -42.72334, -41.32257, -39.92182, 
-    -38.52106, -37.12029, -35.71953, -34.31877, -32.91801, -31.51724, 
-    -30.11648, -28.71572, -27.31495, -25.91419, -24.51342, -23.11266, 
-    -21.71189, -20.31112, -18.91036, -17.50959, -16.10882, -14.70806, 
-    -13.30729, -11.90652, -10.50576, -9.104989, -7.704221, -6.303454, 
-    -4.902687, -3.501919, -2.101151, -0.7003838, 0.7003838, 2.101151, 
-    3.501919, 4.902687, 6.303454, 7.704221, 9.104989, 10.50576, 11.90652, 
-    13.30729, 14.70806, 16.10882, 17.50959, 18.91036, 20.31112, 21.71189, 
-    23.11266, 24.51342, 25.91419, 27.31495, 28.71572, 30.11648, 31.51724, 
-    32.91801, 34.31877, 35.71953, 37.12029, 38.52106, 39.92182, 41.32257, 
-    42.72334, 44.12409, 45.52485, 46.92561, 48.32636, 49.72712, 51.12786, 
-    52.52862, 53.92937, 55.33011, 56.73086, 58.1316, 59.53234, 60.93307, 
-    62.3338, 63.73453, 65.13525, 66.53596, 67.93668, 69.33737, 70.73806, 
-    72.13873, 73.53939, 74.94003, 76.34063, 77.7412, 79.14171, 80.54214, 
-    81.94247, 83.3426, 84.74239, 86.14147, 87.5387, 88.92773 ;
+    double lat_bnds(lat, bnds);
 
- lon = 0, 1.40625, 2.8125, 4.21875, 5.625, 7.03125, 8.4375, 9.84375, 11.25, 
-    12.65625, 14.0625, 15.46875, 16.875, 18.28125, 19.6875, 21.09375, 22.5, 
-    23.90625, 25.3125, 26.71875, 28.125, 29.53125, 30.9375, 32.34375, 33.75, 
-    35.15625, 36.5625, 37.96875, 39.375, 40.78125, 42.1875, 43.59375, 45, 
-    46.40625, 47.8125, 49.21875, 50.625, 52.03125, 53.4375, 54.84375, 56.25, 
-    57.65625, 59.0625, 60.46875, 61.875, 63.28125, 64.6875, 66.09375, 67.5, 
-    68.90625, 70.3125, 71.71875, 73.125, 74.53125, 75.9375, 77.34375, 78.75, 
-    80.15625, 81.5625, 82.96875, 84.375, 85.78125, 87.1875, 88.59375, 90, 
-    91.40625, 92.8125, 94.21875, 95.625, 97.03125, 98.4375, 99.84375, 101.25, 
-    102.6562, 104.0625, 105.4688, 106.875, 108.2812, 109.6875, 111.0938, 
-    112.5, 113.9062, 115.3125, 116.7188, 118.125, 119.5312, 120.9375, 
-    122.3438, 123.75, 125.1562, 126.5625, 127.9688, 129.375, 130.7812, 
-    132.1875, 133.5938, 135, 136.4062, 137.8125, 139.2188, 140.625, 142.0312, 
-    143.4375, 144.8438, 146.25, 147.6562, 149.0625, 150.4688, 151.875, 
-    153.2812, 154.6875, 156.0938, 157.5, 158.9062, 160.3125, 161.7188, 
-    163.125, 164.5312, 165.9375, 167.3438, 168.75, 170.1562, 171.5625, 
-    172.9688, 174.375, 175.7812, 177.1875, 178.5938, 180, 181.4062, 182.8125, 
-    184.2188, 185.625, 187.0312, 188.4375, 189.8438, 191.25, 192.6562, 
-    194.0625, 195.4688, 196.875, 198.2812, 199.6875, 201.0938, 202.5, 
-    203.9062, 205.3125, 206.7188, 208.125, 209.5312, 210.9375, 212.3438, 
-    213.75, 215.1562, 216.5625, 217.9688, 219.375, 220.7812, 222.1875, 
-    223.5938, 225, 226.4062, 227.8125, 229.2188, 230.625, 232.0312, 233.4375, 
-    234.8438, 236.25, 237.6562, 239.0625, 240.4688, 241.875, 243.2812, 
-    244.6875, 246.0938, 247.5, 248.9062, 250.3125, 251.7188, 253.125, 
-    254.5312, 255.9375, 257.3438, 258.75, 260.1562, 261.5625, 262.9688, 
-    264.375, 265.7812, 267.1875, 268.5938, 270, 271.4062, 272.8125, 274.2188, 
-    275.625, 277.0312, 278.4375, 279.8438, 281.25, 282.6562, 284.0625, 
-    285.4688, 286.875, 288.2812, 289.6875, 291.0938, 292.5, 293.9062, 
-    295.3125, 296.7188, 298.125, 299.5312, 300.9375, 302.3438, 303.75, 
-    305.1562, 306.5625, 307.9688, 309.375, 310.7812, 312.1875, 313.5938, 315, 
-    316.4062, 317.8125, 319.2188, 320.625, 322.0312, 323.4375, 324.8438, 
-    326.25, 327.6562, 329.0625, 330.4688, 331.875, 333.2812, 334.6875, 
-    336.0938, 337.5, 338.9062, 340.3125, 341.7188, 343.125, 344.5312, 
-    345.9375, 347.3438, 348.75, 350.1562, 351.5625, 352.9688, 354.375, 
-    355.7812, 357.1875, 358.5938 ;
+    float lon(lon);
+      string lon:long_name = "longitude";
+      string lon:units = "degrees_east";
+      string lon:axis = "X";
+      string lon:standard_name = "longitude";
+      string lon:bounds = "lon_bnds";
 
- plev = 100000, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 
-    20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000 ;
+    double lon_bnds(lon, bnds);
 
- time = 730135.5 ;
+    int msk_rgn(lat, lon);
+      string msk_rgn:long_name = "Mask region";
+      string msk_rgn:units = "bool";
+
+    double plev(plev);
+      string plev:long_name = "pressure";
+      string plev:units = "Pa";
+      string plev:standard_name = "air_pressure";
+      string plev:positive = "down";
+      string plev:axis = "Z";
+
+    float pr(time, lat, lon);
+      string pr:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n machine eagle163s";
+      pr:missing_value = 1.0E20f;
+      pr:_FillValue = 1.0E20f;
+      string pr:cell_methods = "time: mean (interval: 1 month)";
+      string pr:history = "(PRECC+PRECL)*r[h2o]";
+      string pr:original_units = "m-1 s-1";
+      string pr:original_name = "PRECC, PRECL";
+      string pr:standard_name = "precipitation_flux";
+      string pr:units = "kg m-2 s-1";
+      string pr:long_name = "precipitation_flux";
+      string pr:cell_method = "time: mean";
+
+    float tas(time, lat, lon);
+      string tas:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n machine eagle163s";
+      tas:missing_value = 1.0E20f;
+      tas:_FillValue = 1.0E20f;
+      string tas:cell_methods = "time: mean (interval: 1 month)";
+      string tas:history = "Added height coordinate";
+      string tas:coordinates = "height";
+      string tas:original_units = "K";
+      string tas:original_name = "TREFHT";
+      string tas:standard_name = "air_temperature";
+      string tas:units = "K";
+      string tas:long_name = "air_temperature";
+      string tas:cell_method = "time: mean";
+
+    double time(time);
+      string time:calendar = "noleap";
+      string time:standard_name = "time";
+      string time:axis = "T";
+      string time:units = "days since 0000-1-1";
+      string time:bounds = "time_bnds";
+      string time:long_name = "time";
+
+    double time_bnds(time, bnds);
+
+    float ua(time, plev, lat, lon);
+      string ua:comment = "Created using NCL code CCSM_atmm_2cf.ncl on\n machine eagle163s";
+      ua:missing_value = 1.0E20f;
+      string ua:cell_methods = "time: mean (interval: 1 month)";
+      string ua:long_name = "eastward_wind";
+      string ua:history = "Interpolated U with NCL \'vinth2p_ecmwf\'";
+      string ua:units = "m s-1";
+      string ua:original_units = "m s-1";
+      string ua:original_name = "U";
+      string ua:standard_name = "eastward_wind";
+      ua:_FillValue = 1.0E20f;
+
+  // global attributes:
+  string :CVS_Id = "$Id$";
+  string :creation_date = "";
+  string :prg_ID = "Source file unknown Version unknown Date unknown";
+  string :cmd_ln = "bds -x 256 -y 128 -m 23 -o /data/zender/data/dst_T85.nc";
+  string :history = "Tue Oct 25 15:08:51 2005: ncks -O -x -v va -m sresa1b_ncar_ccsm3_0_run1_200001.nc sresa1b_ncar_ccsm3_0_run1_200001.nc\nTue Oct 25 15:07:21 2005: ncks -d time,0 sresa1b_ncar_ccsm3_0_run1_200001_201912.nc sresa1b_ncar_ccsm3_0_run1_200001.nc\nTue Oct 25 13:29:43 2005: ncks -d time,0,239 sresa1b_ncar_ccsm3_0_run1_200001_209912.nc /var/www/html/tmp/sresa1b_ncar_ccsm3_0_run1_200001_201912.nc\nThu Oct 20 10:47:50 2005: ncks -A -v va /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/tas/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_200001_209912.nc\nWed Oct 19 14:55:04 2005: ncks -F -d time,01,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc\nWed Oct 19 14:53:28 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_1192_1196.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/sresa1b_ncar_ccsm3_0_run1_va_200001_209912.nc\nWed Oct 19 14:50:38 2005: ncks -F -d time,05,1200 /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/foo_05_1200.nc\nWed Oct 19 14:49:45 2005: ncrcat /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2079-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2080-01_cat_2099-12.nc /data/brownmc/sresa1b/atm/mo/va/ncar_ccsm3_0/run1/va_A1.SRESA1B_1.CCSM.atmm.2000-01_cat_2099-12.nc\nCreated from CCSM3 case b30.040a\n by wgstrand@ucar.edu\n on Wed Nov 17 14:12:57 EST 2004\n \n For all data, added IPCC requested metadata";
+  string :table_id = "Table A1";
+  string :title = "model output prepared for IPCC AR4";
+  string :institution = "NCAR (National Center for Atmospheric \nResearch, Boulder, CO, USA)";
+  string :source = "CCSM3.0, version beta19 (2004): \natmosphere: CAM3.0, T85L26;\nocean     : POP1.4.3 (modified), gx1v3\nsea ice   : CSIM5.0, T85;\nland      : CLM3.0, gx1v3";
+  string :contact = "ccsm@ucar.edu";
+  string :project_id = "IPCC Fourth Assessment";
+  string :Conventions = "CF-1.0";
+  string :references = "Collins, W.D., et al., 2005:\n The Community Climate System Model, Version 3\n Journal of Climate\n \n Main website: http://www.ccsm.ucar.edu";
+  string :acknowledgment = " Any use of CCSM data should acknowledge the contribution\n of the CCSM project and CCSM sponsor agencies with the \n following citation:\n \'This research uses data provided by the Community Climate\n System Model project (www.ccsm.ucar.edu), supported by the\n Directorate for Geosciences of the National Science Foundation\n and the Office of Biological and Environmental Research of\n the U.S. Department of Energy.\'\nIn addition, the words \'Community Climate System Model\' and\n \'CCSM\' should be included as metadata for webpages referencing\n work using CCSM data or as keywords provided to journal or book\npublishers of your manuscripts.\nUsers of CCSM data accept the responsibility of emailing\n citations of publications of research using CCSM data to\n ccsm@ucar.edu.\nAny redistribution of CCSM data must include this data\n acknowledgement statement.";
+  :realization = 1;
+  string :experiment_id = "720 ppm stabilization experiment (SRESA1B)";
+  string :comment = "This simulation was initiated from year 2000 of \n CCSM3 model run b30.030a and executed on \n hardware cheetah.ccs.ornl.gov. The input external forcings are\nozone forcing    : A1B.ozone.128x64_L18_1991-2100_c040528.nc\naerosol optics   : AerosolOptics_c040105.nc\naerosol MMR      : AerosolMass_V_128x256_clim_c031022.nc\ncarbon scaling   : carbonscaling_A1B_1990-2100_c040609.nc\nsolar forcing    : Fixed at 1366.5 W m-2\nGHGs             : ghg_ipcc_A1B_1870-2100_c040521.nc\nGHG loss rates   : noaamisc.r8.nc\nvolcanic forcing : none\nDMS emissions    : DMS_emissions_128x256_clim_c040122.nc\noxidants         : oxid_128x256_L26_clim_c040112.nc\nSOx emissions    : SOx_emissions_A1B_128x256_L2_1990-2100_c040608.nc\n Physical constants used for derived data:\n Lv (latent heat of evaporation): 2.501e6 J kg-1\n Lf (latent heat of fusion     ): 3.337e5 J kg-1\n r[h2o] (density of water      ): 1000 kg m-3\n g2kg   (grams to kilograms    ): 1000 g kg-1\n \n Integrations were performed by NCAR and CRIEPI with support\n and facilities provided by NSF, DOE, MEXT and ESC/JAMSTEC.";
+  string :model_name_english = "NCAR CCSM";
 }

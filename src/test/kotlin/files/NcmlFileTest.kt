@@ -53,28 +53,7 @@ internal class NcmlFileTypeTest : BasePlatformTestCase() {
     /**
      * Test the isBinary property.
      */
-     fun testIsBinary() {
+    fun testIsBinary() {
         assertFalse(type.isBinary)
-    }
-}
-
-
-/**
- * Unit tests for the WriteCdlFileAction class.
- */
-internal class WriteNcmlFileActionTest : BasePlatformTestCase() {
-
-    private val ncPath = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
-
-    /**
-     * Test the writeSchema() method.
-     */
-    fun testWriteSchema() {
-        // TODO: Compare output against 'sresa1b_ncar_ccsm3-example.cdl'.
-        val ncmlPath = kotlin.io.path.createTempFile(suffix = ".ncml")
-        val action = WriteNcmlFileAction()
-        action.writeSchema(ncPath, ncmlPath.toString())
-//        val lines = cdlPath.toFile().readLines()
-//        assertEquals(0, lines[0].indexOf("netcdf"))
     }
 }
