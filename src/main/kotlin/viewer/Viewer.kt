@@ -21,13 +21,11 @@ import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
 import ucar.nc2.NetcdfFile
 import ucar.nc2.NetcdfFiles
-import java.awt.Color
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.tree.*
-import javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
 
 
 private const val TITLE = "NetCDF Viewer"
@@ -147,12 +145,9 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
             it.fillTree(file)
             expandPath(TreePath(it.root))
         }
-        selectionModel = SelectionModel()
-        selectionModel.selectionMode = DISCONTIGUOUS_TREE_SELECTION
+        setSelectionModel(SelectionModel())
         addTreeSelectionListener(this::selectionListener)
-        setCellRenderer(DefaultTreeCellRenderer().also {
-            it.backgroundSelectionColor = Color.WHITE
-        })
+        setCellRenderer(DefaultTreeCellRenderer())  // enhanced styling
     }
 
     override fun dispose() {
@@ -190,6 +185,11 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
      * Restrict selections to Variable nodes.
      */
     private class SelectionModel : DefaultTreeSelectionModel() {
+
+        init {
+            selectionMode = DISCONTIGUOUS_TREE_SELECTION
+        }
+
         /**
          * Set the selection path if the last component is a Variable node.
          *
