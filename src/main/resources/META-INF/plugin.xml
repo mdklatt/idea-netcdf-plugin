@@ -34,6 +34,9 @@
     <fileType name="netCDF" implementationClass="dev.mdklatt.idea.netcdf.files.NetcdfFileType" fieldName="INSTANCE" extensions="nc"/>
     <fileType name="CDL" implementationClass="dev.mdklatt.idea.netcdf.files.CdlFileType" fieldName="INSTANCE" extensions="cdl"/>
     <fileType name="NcML" implementationClass="dev.mdklatt.idea.netcdf.files.NcmlFileType" fieldName="INSTANCE" extensions="ncml"/>
+    <toolWindow id="NetCDF" secondary="true" icon="AllIcons.General.Modified" anchor="bottom"
+                factoryClass="dev.mdklatt.idea.netcdf.viewer.ViewerWindowFactory"
+                doNotActivateOnStart="true" canCloseContents="false" />
   </extensions>
 
 </idea-plugin>

@@ -9,9 +9,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentManagerEvent
@@ -28,11 +27,44 @@ import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.tree.*
 
 
-private const val TITLE = "NetCDF Viewer"
+private const val TITLE = "NetCDF"  // must match window ID in plugin.xml
+
+
+class ViewerWindowFactory : ToolWindowFactory {
+
+    companion object {
+        /**
+         * Add content to existing tool window.
+         *
+         * @param project current project reference
+         * @param ncPath netCDF file path
+         */
+        internal fun addContent(project: Project, ncPath: String) {
+            val fileTab = FileTab(ncPath)
+            val dataTab = DataTab(fileTab)
+            ToolWindowManager.getInstance(project).getToolWindow(TITLE)?.let {
+                it.setToHideOnEmptyContent(true)
+                it.contentManager.removeAllContents(true)  // display one file at a time
+                sequenceOf(fileTab, dataTab).forEach { tab -> tab.addContent(it) }
+                it.show()
+            } ?: throw RuntimeException("Could not get $TITLE tool window")
+        }
+
+    }
+
+    /**
+     * Called by IDE to create new tool window.
+     */
+    override fun createToolWindowContent(project: Project, window: ToolWindow) {
+        // Nothing to do show until user selects a netCDF file.
+        // TODO: Display message, e.g. "Select netCDF file in Project window".
+        // TODO: Allow drag and drop to open new window?
+    }
+}
 
 
 /**
- * Handler for the "Open in NetCDF Viewer" action.
+ * Handler for the "NetCDF > Open in Viewer" action.
  */
 class OpenViewerAction : AnAction() {
     /**
@@ -45,8 +77,8 @@ class OpenViewerAction : AnAction() {
         val path = file?.virtualFile?.canonicalPath
         if (file?.fileType is NetcdfFileType && path != null) {
             // This is an action in the Project View window, so presumably the
-            // project reference is never null...?
-            open(event.project!!, path)
+            // project reference is never null.
+            ViewerWindowFactory.addContent(event.project!!, path)
         } else {
             Messages.showMessageDialog(
                 event.project,
@@ -56,38 +88,10 @@ class OpenViewerAction : AnAction() {
             )
         }
     }
-
-    private fun getWindow(project: Project) : ToolWindow {
-        val manager = ToolWindowManager.getInstance(project)
-        var window = manager.getToolWindow(TITLE)
-        if (window == null) {
-            // First-time tool registration.
-            // TODO: Deprecated: "Use ToolWindowFactory and toolWindow extension point"
-            window = manager.registerToolWindow(
-                RegisterToolWindowTask(
-                    id = TITLE,
-                    icon = IconLoader.getIcon("/icons/ic_extension.svg", javaClass),
-                    component = null,
-                    canCloseContent = false,
-                    canWorkInDumbMode = true,
-                )
-            )
-        }
-        return window.also { it.setToHideOnEmptyContent(true) }
-    }
-
-    private fun open(project: Project, path: String) {
-        val window = getWindow(project)
-        window.contentManager.removeAllContents(true)
-        val fileTab = FileTab(path)
-        val dataTab = DataTab(fileTab)
-        listOf(fileTab, dataTab).forEach { it.addContent(window) }
-        window.show()
-    }
 }
 
-// TODO: Display File and Data view as tabs in a single tab, and use tabs for multiple files.
 
+// TODO: Display File and Data view as tabs in a single tab, and use tabs for multiple files.
 
 /**
  * Interface for tool window content tabs.
