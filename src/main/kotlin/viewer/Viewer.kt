@@ -17,8 +17,6 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
-import ucar.nc2.NetcdfFile
-import ucar.nc2.NetcdfFiles
 import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.event.ChangeEvent
@@ -26,6 +24,9 @@ import javax.swing.event.ChangeListener
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.tree.*
+import kotlin.io.path.*
+import ucar.nc2.NetcdfFile
+import ucar.nc2.NetcdfFiles
 
 
 private const val TITLE = "NetCDF"  // must match toolWindow ID in plugin.xml
@@ -53,8 +54,8 @@ class ViewerWindowFactory : ToolWindowFactory {
                     sequenceOf(schemaTab, dataTab).forEach { tab ->
                         tab.addContent(pane)
                     }
-                    cm.factory.createContent(pane, ncPath, false).let { content ->
-                        // TODO: Use file name only for title
+                    val ncName = Path(ncPath).name
+                    cm.factory.createContent(pane, ncName, false).let { content ->
                         content.description = ncPath
                         cm.addContent(content)
                         content.setDisposer {
@@ -145,14 +146,14 @@ private interface ViewerTab {
 /**
  * File schema tree view.
  */
-internal class SchemaTab(path: String) : Tree(), ViewerTab {
+internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
 
     override val title = "Schema"
     override val description = "File schema"
     override val component = JBScrollPane(this)
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
-    val file: NetcdfFile = NetcdfFiles.open(path)
+    val file: NetcdfFile = NetcdfFiles.open(ncPath)
     var selectedVars = emptyList<String>()
 
     init {
@@ -186,7 +187,7 @@ internal class SchemaTab(path: String) : Tree(), ViewerTab {
         if (variables.map { it.dimensions.joinToString(",") }.toSet().size > 1) {
             Messages.showMessageDialog(
                 component,
-                "Selected variables have different dimensions",
+                "Selected variables must have compatible dimensions",
                 TITLE,
                 Messages.getErrorIcon()
             )
@@ -262,7 +263,6 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
                 if ((event?.source as JBTabbedPane).selectedIndex == index) {
                     load()
                 }
-                return
             }
         })
         return index
