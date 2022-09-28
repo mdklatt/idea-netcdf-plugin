@@ -3,9 +3,7 @@
  */
 package dev.mdklatt.idea.netcdf.viewer
 
-import com.intellij.openapi.actionSystem.AnActionEvent
 import org.junit.jupiter.api.AfterEach
-import ucar.nc2.NetcdfFile
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -18,27 +16,27 @@ import kotlin.test.Test
 internal class ViewerTabTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
-    private val fileTab = FileTab(path)
+    private val schemaTab = SchemaTab(path)
 
     /**
      * Per-test clean up.
      */
     @AfterEach
     fun tearDown() {
-        fileTab.dispose()
+        schemaTab.dispose()
     }
 
     @Test
     fun testFileTab() {
-        assertEquals(path, fileTab.file.location)
-        assertTrue(fileTab.selectedVars.isEmpty())
-        assertNotNull(fileTab.model)
-        assertNotNull(fileTab)
+        assertEquals(path, schemaTab.file.location)
+        assertTrue(schemaTab.selectedVars.isEmpty())
+        assertNotNull(schemaTab.model)
+        assertNotNull(schemaTab)
     }
 
     @Test
     fun testDataTab() {
-        val dataTab = DataTab(fileTab)
+        val dataTab = DataTab(schemaTab)
         assertNotNull(dataTab.model)
         dataTab.dispose()
     }

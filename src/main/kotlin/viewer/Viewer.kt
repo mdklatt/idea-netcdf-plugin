@@ -13,8 +13,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
@@ -22,12 +21,14 @@ import ucar.nc2.NetcdfFile
 import ucar.nc2.NetcdfFiles
 import java.awt.Font
 import javax.swing.JComponent
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 import javax.swing.event.TreeSelectionEvent
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.tree.*
 
 
-private const val TITLE = "NetCDF"  // must match window ID in plugin.xml
+private const val TITLE = "NetCDF"  // must match toolWindow ID in plugin.xml
 
 
 class ViewerWindowFactory : ToolWindowFactory {
@@ -40,12 +41,30 @@ class ViewerWindowFactory : ToolWindowFactory {
          * @param ncPath netCDF file path
          */
         internal fun addContent(project: Project, ncPath: String) {
-            val fileTab = FileTab(ncPath)
-            val dataTab = DataTab(fileTab)
+            val schemaTab = SchemaTab(ncPath)
+            val dataTab = DataTab(schemaTab)
             ToolWindowManager.getInstance(project).getToolWindow(TITLE)?.let {
+                // This is kind of a mess, but it's working. The IoC by using
+                // ViewTab.addContent() seems like a code smell in this case.
+                // TODO: The JBTabbedPane component needs to be a class, e.g. FileView.
                 it.setToHideOnEmptyContent(true)
-                it.contentManager.removeAllContents(true)  // display one file at a time
-                sequenceOf(fileTab, dataTab).forEach { tab -> tab.addContent(it) }
+                it.contentManager.let { cm ->
+                    val pane = JBTabbedPane()
+                    sequenceOf(schemaTab, dataTab).forEach { tab ->
+                        tab.addContent(pane)
+                    }
+                    cm.factory.createContent(pane, ncPath, false).let { content ->
+                        // TODO: Use file name only for title
+                        content.description = ncPath
+                        cm.addContent(content)
+                        content.setDisposer {
+                            // FIXME: Two layers deep, definitely a code smell.
+                            sequenceOf(schemaTab, dataTab).forEach { tab ->
+                                tab.dispose()
+                            }
+                        }
+                    }
+                }
                 it.show()
             } ?: throw RuntimeException("Could not get $TITLE tool window")
         }
@@ -91,8 +110,6 @@ class OpenViewerAction : AnAction() {
 }
 
 
-// TODO: Display File and Data view as tabs in a single tab, and use tabs for multiple files.
-
 /**
  * Interface for tool window content tabs.
  */
@@ -108,19 +125,14 @@ private interface ViewerTab {
     val component: JComponent
 
     /**
-     * Add this tab to a ToolWindow.
+     * Add this tab to a JTabbedPane.
      *
-     * @param window: window to add tab to
-     * @return: resulting content index in window
+     * @param parent: parent component
+     * @return: index of this tab in the parent component
      */
-    fun addContent(window: ToolWindow): Int {
-        val factory = window.contentManager.factory
-        factory.createContent(component, title, false).also {
-            it.description = description
-            it.setDisposer { dispose() }
-            window.contentManager.addContent(it)
-        }
-        return window.contentManager.contentCount - 1
+    fun addContent(parent: JBTabbedPane): Int {
+        parent.addTab(title, null, component, description)
+        return parent.tabCount - 1  // possible race condition?
     }
 
     /**
@@ -133,10 +145,10 @@ private interface ViewerTab {
 /**
  * File schema tree view.
  */
-internal class FileTab(path: String) : Tree(), ViewerTab {
+internal class SchemaTab(path: String) : Tree(), ViewerTab {
 
-    override val title = "File"
-    override val description = "File schema (experimental tree view)"
+    override val title = "Schema"
+    override val description = "File schema"
     override val component = JBScrollPane(this)
 
     private val logger = Logger.getInstance(this::class.java)  // runtime class resolution
@@ -222,12 +234,12 @@ internal class FileTab(path: String) : Tree(), ViewerTab {
 
 
 /**
- * Display variable data.
+ * Variable data table view.
  */
-internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), ViewerTab {
+internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()), ViewerTab {
 
     override val title = "Data"
-    override val description = "Selected variables"
+    override val description = "Data table for selected variables"
     override val component = JBScrollPane(this)
 
     private var displayedVars = emptyList<String>()
@@ -237,15 +249,20 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
         autoCreateRowSorter = true
     }
 
-    override fun addContent(window: ToolWindow): Int {
-        val index = super.addContent(window)
-        window.addContentManagerListener(object : ContentManagerListener {
-            override fun selectionChanged(event: ContentManagerEvent) {
-                // Lazy loading when tab is selected.
-                super.selectionChanged(event)
-                if (event.operation.name == "add" && event.index == index) {
+    override fun addContent(parent: JBTabbedPane): Int {
+        val index = super.addContent(parent)
+        parent.addChangeListener(object: ChangeListener {
+            /**
+             * Invoked when parent state chages..
+             *
+             * @param event  a ChangeEvent object
+             */
+            override fun stateChanged(event: ChangeEvent?) {
+                // Lazy loading when this tab is selected.
+                if ((event?.source as JBTabbedPane).selectedIndex == index) {
                     load()
                 }
+                return
             }
         })
         return index
@@ -259,11 +276,11 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
      * Load variables from the netCDF file.
      */
     fun load() {
-        if (displayedVars == fileTab.selectedVars) {
+        if (displayedVars == schemaTab.selectedVars) {
             return  // selected variables are already displayed
         }
-        (model as DataModel).fillTable(fileTab.file, fileTab.selectedVars.asSequence())
-        displayedVars = fileTab.selectedVars
+        (model as DataModel).fillTable(schemaTab.file, schemaTab.selectedVars.asSequence())
+        displayedVars = schemaTab.selectedVars
         formatColumns()
     }
 
@@ -274,7 +291,7 @@ internal class DataTab(private val fileTab: FileTab) : JBTable(DataModel()), Vie
         columnModel.columns.asSequence().forEach {
             var headerStyle = Font.BOLD
             var cellStyle = Font.PLAIN
-            if (!fileTab.selectedVars.contains(it.headerValue)) {
+            if (!schemaTab.selectedVars.contains(it.headerValue)) {
                 // Add italics to coordinate columns.
                 headerStyle = headerStyle or Font.ITALIC
                 cellStyle = cellStyle or Font.ITALIC
