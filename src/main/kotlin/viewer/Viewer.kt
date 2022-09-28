@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.table.JBTable
 import com.intellij.ui.treeStructure.Tree
 import dev.mdklatt.idea.netcdf.files.NetcdfFileType
@@ -42,34 +43,12 @@ class ViewerWindowFactory : ToolWindowFactory {
          * @param ncPath netCDF file path
          */
         internal fun addContent(project: Project, ncPath: String) {
-            val schemaTab = SchemaTab(ncPath)
-            val dataTab = DataTab(schemaTab)
             ToolWindowManager.getInstance(project).getToolWindow(TITLE)?.let {
-                // This is kind of a mess, but it's working. The IoC by using
-                // ViewTab.addContent() seems like a code smell in this case.
-                // TODO: The JBTabbedPane component needs to be a class, e.g. FileView.
+                FilePane(ncPath).createContent(it.contentManager)
                 it.setToHideOnEmptyContent(true)
-                it.contentManager.let { cm ->
-                    val pane = JBTabbedPane()
-                    sequenceOf(schemaTab, dataTab).forEach { tab ->
-                        tab.addContent(pane)
-                    }
-                    val ncName = Path(ncPath).name
-                    cm.factory.createContent(pane, ncName, false).let { content ->
-                        content.description = ncPath
-                        cm.addContent(content)
-                        content.setDisposer {
-                            // FIXME: Two layers deep, definitely a code smell.
-                            sequenceOf(schemaTab, dataTab).forEach { tab ->
-                                tab.dispose()
-                            }
-                        }
-                    }
-                }
                 it.show()
             } ?: throw RuntimeException("Could not get $TITLE tool window")
         }
-
     }
 
     /**
@@ -78,7 +57,7 @@ class ViewerWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, window: ToolWindow) {
         // Nothing to do show until user selects a netCDF file.
         // TODO: Display message, e.g. "Select netCDF file in Project window".
-        // TODO: Allow drag and drop to open new window?
+        // TODO: Allow drag and drop to open new file?
     }
 }
 
@@ -112,9 +91,41 @@ class OpenViewerAction : AnAction() {
 
 
 /**
- * Interface for tool window content tabs.
+ * Root element for displaying a netCDF file.
+ *
+ * Each file will have a file schema tab and a data view tab.
  */
-private interface ViewerTab {
+internal class FilePane(private val ncPath: String): JBTabbedPane() {
+
+    private val schemaTab = SchemaTab(ncPath)
+    private val dataTab = DataTab(schemaTab)
+
+    private val tabs: Sequence<FileTab>
+        get() = sequenceOf(schemaTab, dataTab)
+
+    init {
+        tabs.forEach { it.addContent(this) }
+    }
+
+    fun dispose() {
+        tabs.forEach { it.dispose() }
+    }
+
+    fun createContent(contentManager: ContentManager) {
+        val name = Path(ncPath).name
+        contentManager.factory.createContent(this, name, false).let {
+            it.description = ncPath
+            it.setDisposer(this::dispose)
+            contentManager.addContent(it)
+        }
+    }
+}
+
+
+/**
+ * Interface for FilePane content tabs.
+ */
+private interface FileTab {
 
     /** Tab display title. */
     val title: String
@@ -131,13 +142,13 @@ private interface ViewerTab {
      * @param parent: parent component
      * @return: index of this tab in the parent component
      */
-    fun addContent(parent: JBTabbedPane): Int {
+    fun addContent(parent: FilePane): Int {
         parent.addTab(title, null, component, description)
         return parent.tabCount - 1  // possible race condition?
     }
 
     /**
-     * Dispose of tab resources when it is closed.
+     * Dispose of tab resources on close.
      */
     fun dispose()
 }
@@ -146,7 +157,7 @@ private interface ViewerTab {
 /**
  * File schema tree view.
  */
-internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
+internal class SchemaTab(ncPath: String) : Tree(), FileTab {
 
     override val title = "Schema"
     override val description = "File schema"
@@ -157,7 +168,7 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
     var selectedVars = emptyList<String>()
 
     init {
-        logger.debug("Loading s${file.location} in viewer")
+        logger.debug("Loading ${file.location} in viewer")
         this.model = FileModel().also {
             it.fillTree(file)
             expandPath(TreePath(it.root))
@@ -167,11 +178,13 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
         setCellRenderer(DefaultTreeCellRenderer())  // enhanced styling
     }
 
+    /**
+     * Dispose of resources for this element.
+     */
     override fun dispose() {
         (model as FileModel).clearTree()
         file.close()
     }
-
 
     /**
      * Handle node selection events.
@@ -187,7 +200,7 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
         if (variables.map { it.dimensions.joinToString(",") }.toSet().size > 1) {
             Messages.showMessageDialog(
                 component,
-                "Selected variables must have compatible dimensions",
+                "All variables in the selection must have compatible dimensions",
                 TITLE,
                 Messages.getErrorIcon()
             )
@@ -208,7 +221,7 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
         }
 
         /**
-         * Set the selection path if the last component is a Variable node.
+         * Restrict the selection path to Variable nodes.
          *
          * @param path: selection path
          */
@@ -220,7 +233,7 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
         }
 
         /**
-         * Add to the selection path if the last component is a Variable node.
+         * Add Variable nodes only to the selection path.
          *
          * @param path: selection path
          */
@@ -237,7 +250,7 @@ internal class SchemaTab(ncPath: String) : Tree(), ViewerTab {
 /**
  * Variable data table view.
  */
-internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()), ViewerTab {
+internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()), FileTab {
 
     override val title = "Data"
     override val description = "Data table for selected variables"
@@ -250,7 +263,11 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         autoCreateRowSorter = true
     }
 
-    override fun addContent(parent: JBTabbedPane): Int {
+    /**
+     * Add this tab to a FilePane.
+     */
+    override fun addContent(parent: FilePane): Int {
+        // Override parent to add event listener.
         val index = super.addContent(parent)
         parent.addChangeListener(object: ChangeListener {
             /**
@@ -268,6 +285,9 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         return index
     }
 
+    /**
+     * Dispose of resources for this element.
+     */
     override fun dispose() {
         (model as DataModel).clearTable()
     }

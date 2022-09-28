@@ -13,7 +13,7 @@ import kotlin.test.Test
 /**
  * Unit tests for ViewerTab classes.
  */
-internal class ViewerTabTest {
+internal class FileTabTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val schemaTab = SchemaTab(path)
