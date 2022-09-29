@@ -11,27 +11,30 @@
 [5]: https://github.com/mdklatt/idea-netcdf-plugin/actions/workflows/test.yml
 
 
+## Description
+
+<!-- This content is used by the Gradle IntelliJ Plugin. --> 
 <!-- Plugin description -->
 
-Tools for inspecting [Network Common Data Form (netCDF)][6] files in any
-[JetBrains][7] IDE. Right-clicking on a file in the *Project* tool window will
-reveal a `NetCDF` context menu that offers these actions:
+Tools for inspecting [Network Common Data Form][6] (netCDF) files in any
+[JetBrains][7] IDE. Right-click on a file in the *Project* tool window to
+access the `NetCDF` context menu, which offers these actions:
 
-## Open in Viewer
+### Open in Viewer
 
-Opens a file in the *NetCDF* tool window. The `Schema` tab shows the file
+Open the file in the *NetCDF* tool window. The `Schema` tab shows the file
 structure. Variables selected in this tab will be displayed in the `Data` tab. 
 Multiple variables can be selected as long as they have the same dimensions.
 
 The plugin does not yet support pagination, so **beware of attempting to view
 large variables**.
 
-## Create CDL File
+### Create CDL File
 
-Write the file header to a [Common Data Language][8] (CDL) file; equivalent to
-executing `ndcump -h`.
+Write the file header to a [Common Data Language][8] (CDL) file. This is
+equivalent to executing `ndcump -h`.
 
-## Create NcML File
+### Create NcML File
 
 Write the file header to a [NetCDF Markup Language][9] (NcML) file.
 
@@ -42,3 +45,10 @@ Write the file header to a [NetCDF Markup Language][9] (NcML) file.
 [9]: https://docs.unidata.ucar.edu/netcdf-java/current/userguide/ncml_overview.html
 
 <!-- Plugin description end -->
+
+## Installation
+
+[Releases][3] include a binary distribution named `idea-netcdf-plugin-<version>.zip` 
+that can be used to [install the plugin from disk][10].
+
+[10]: https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk
