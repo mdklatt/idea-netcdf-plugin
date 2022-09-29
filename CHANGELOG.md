@@ -1,8 +1,14 @@
-<!-- Keep a Changelog guide -> https://keepachangelog.com -->
+# Changelog
 
-# NetCDF Plugin Changelog
+All notable changes to this project will be documented in this file.
 
-## [0.1.0-alpha.0]
+The format is based on [Keep a Changelog][0], and this project adheres to 
+[Semantic Versioning][1].
+
+## [Unreleased]
 ### Added
-- Added *netCDF*, *CDL*, and *NcML* file types
-- Added netCDF viewer
+- Initial release.
+
+
+[0]: https://keepachangelog.com/en
+[1]: https://semver.org/spec/v2.0.0.html
