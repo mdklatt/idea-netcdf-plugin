@@ -23,9 +23,27 @@ internal class SaveFileDialogTest : BasePlatformTestCase() {
     private lateinit var dialog: SaveFileDialog
 
     /**
+     * Determine if test should be run.
+     *
+     * @return: true if test should be run
+     */
+    override fun shouldRunTest(): Boolean {
+        if (System.getProperty("os.arch") == "aarch64") {
+            // Skip all fixture tests on Apple Silicon due to failure to load
+            // JNA library. Not sure if this is the proper way to do this, but
+            // it works. Notably, setUp() will no be called, which is where the
+            // failure is occurring.
+            // TODO: Make tests work on Apple Silicon.
+            return false
+        }
+        return super.shouldRunTest()
+    }
+
+    /**
      * Per-test initialization.
      */
     override fun setUp() {
+        // FIXME: <https://github.com/mdklatt/idea-netcdf-plugin/issues/1>
         super.setUp()
         dialog = SaveFileDialog("Save File Test")
     }
