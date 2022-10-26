@@ -3,7 +3,7 @@
  */
 package dev.mdklatt.idea.netcdf.viewer
 
-import org.junit.jupiter.api.AfterEach
+import kotlin.test.AfterTest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -21,7 +21,7 @@ internal class FileTabTest {
     /**
      * Per-test clean up.
      */
-    @AfterEach
+    @AfterTest
     fun tearDown() {
         schemaTab.dispose()
     }
