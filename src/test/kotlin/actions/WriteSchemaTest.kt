@@ -7,9 +7,9 @@ import kotlin.test.assertContentEquals
 
 
 /**
- * Unit tests for the WriteSchemaAction classes
+ * Unit tests for the WriteSchemaAction classes.
  */
-internal class NcmlFileTypeTest : BasePlatformTestCase() {
+internal class WriteSchemaActionTest : BasePlatformTestCase() {
 
 private val ncPath = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
 
