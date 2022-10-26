@@ -61,6 +61,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.0"))
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")  // required for IDE platform tests
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")
 }
 
 
@@ -126,5 +127,9 @@ tasks {
         dependsOn(verifyPlugin)
         dependsOn(verifyPluginConfiguration)
         dependsOn(runPluginVerifier)
+    }
+
+    test {
+        useJUnitPlatform()  // use JUnit5
     }
 }
