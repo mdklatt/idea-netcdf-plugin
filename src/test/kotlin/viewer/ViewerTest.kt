@@ -3,6 +3,7 @@
  */
 package dev.mdklatt.idea.netcdf.viewer
 
+import org.junit.jupiter.api.Tag
 import kotlin.test.AfterTest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -27,6 +28,7 @@ internal class FileTabTest {
     }
 
     @Test
+    @Tag("issues/1")  // <https://github.com/mdklatt/idea-netcdf-plugin/issues/1>
     fun testFileTab() {
         assertEquals(path, schemaTab.file.location)
         assertTrue(schemaTab.selectedVars.isEmpty())
@@ -35,6 +37,7 @@ internal class FileTabTest {
     }
 
     @Test
+    @Tag("issues/1")  // <https://github.com/mdklatt/idea-netcdf-plugin/issues/1>
     fun testDataTab() {
         val dataTab = DataTab(schemaTab)
         assertNotNull(dataTab.model)

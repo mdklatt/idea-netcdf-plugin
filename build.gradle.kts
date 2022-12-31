@@ -123,6 +123,19 @@ tasks {
     }
 
     test {
-        useJUnitPlatform()  // use JUnit5
+        useJUnitPlatform {
+            if (System.getProperty("os.arch") == "aarch64") {
+                // Exclude tests that fail under Gradle on Apple Silicon. These
+                // tests should pass when running directly using JUnit, e.g.
+                // using an IntelliJ JUnit run configuration.
+                // <https://github.com/mdklatt/idea-netcdf-plugin/issues/1>
+                excludeTags("issues/1")
+                exclude(
+                    // BasePlatformTestCase tests which use JUnit3 and do not
+                    // support @Tag.
+                    "**/SaveFileDialogTest.*",
+                )
+            }
+        }
     }
 }
