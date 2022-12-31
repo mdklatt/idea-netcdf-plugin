@@ -2,14 +2,13 @@
 
 import org.jetbrains.changelog.date
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
 
 
 plugins {
-    kotlin("jvm") version("1.7.10")
-    id("org.jetbrains.intellij") version("1.9.0")
+    kotlin("jvm") version("1.7.21")
+    id("org.jetbrains.intellij") version("1.11.0")
     id("org.jetbrains.changelog") version("1.3.1")
 }
 
@@ -61,7 +60,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.0"))
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")  // required for IDE platform tests
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")  // JUnit test runner
 }
 
 
@@ -69,12 +68,6 @@ tasks {
 
     wrapper {
         gradleVersion = "7.5.1"
-    }
-
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "11"  // required since 2020.3
-        }
     }
 
     patchPluginXml {
