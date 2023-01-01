@@ -47,6 +47,10 @@ internal class FileModel() : DefaultTreeModel(null) {
      * File node for a netCDF variable.
      */
     class Variable(variable: ucar.nc2.Variable) : Node<ucar.nc2.Variable>(variable) {
+        /** Full path to variable within netCDF file. */
+        override val name: String
+            get() = fileNode.fullName
+
         /** Variable dimensions. */
         val dimensions: Sequence<String>
             get() {

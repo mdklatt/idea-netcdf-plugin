@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog][0], and this project adheres to
 ### Removed
 
 ### Fixed
+- Fixed data view for variables in a subgroup.
 
 ### Security
 
