@@ -17,7 +17,7 @@ internal class DataModelTest {
 
     private val path = "src/test/resources/sresa1b_ncar_ccsm3-example.nc"
     private val file = NetcdfFiles.open(path)
-    private val model = DataModel().apply { fillTable(file, sequenceOf("pr", "tas"))}
+    private val model = DataModel(10).apply { fillTable(file, sequenceOf("pr", "tas"))}
     private val labels = listOf("time", "lat", "lon", "pr", "tas")
 
     /**
@@ -55,7 +55,9 @@ internal class DataModelTest {
     @Test
     fun testRowCount() {
         model.fillTable(file, sequenceOf("pr"))
-        assertEquals(32768, model.rowCount)
+        assertEquals(10, model.rowCount)
+        model.pageNumber = 3277
+        assertEquals(8, model.rowCount)
     }
 
     /**
@@ -91,6 +93,7 @@ internal class DataModelTest {
     fun testGetCellValueAt() {
         // TODO: Add test for fixed-length strings.
         assertEquals("2000-05-16T12:00:00Z", model.getValueAt(0, 0))
-        assertEquals(215.73935f, model.getValueAt(2, 4))
+        model.pageNumber = 2
+        assertEquals(215.08086f, model.getValueAt(1, 4))
     }
 }

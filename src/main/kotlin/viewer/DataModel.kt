@@ -3,17 +3,20 @@ package dev.mdklatt.idea.netcdf.viewer
 import com.intellij.openapi.diagnostic.Logger
 import java.lang.IllegalStateException
 import javax.swing.table.AbstractTableModel
+import kotlin.math.ceil
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
 import vendor.tandrial.itertools.cartProd
 import dev.mdklatt.idea.netcdf.*
 
+
 /**
- * Represent n-dimensional netCDF variables as a two-dimensional table where
- * variables are mapped to columns in flattened row-major order.
-*/
-internal class DataModel : AbstractTableModel() {
+ * Read n-dimensional netCDF data as a two-dimensional table where variables
+ * are mapped to columns in flattened row-major order.
+ */
+internal class NetcdfReader(private val file: NetcdfFile, variables: Sequence<String>) {
+
     /**
      * Define a table column.
      */
@@ -90,7 +93,12 @@ internal class DataModel : AbstractTableModel() {
          */
         protected open fun read(index: IntArray) : ucar.ma2.Array = variable.read(origin(index), shape)
 
-        /** @see VariableColumn.value */
+        /**
+         * Get the variable value for the given table row.
+         *
+         * @param row row index
+         * @return variable value
+         */
         override fun value(row: Int) : Any = read(index[row]).getObject(0)
     }
 
@@ -145,64 +153,44 @@ internal class DataModel : AbstractTableModel() {
     }
 
     private val logger = Logger.getInstance(this::class.java)
-    private var file: NetcdfFile? = null
     private var dimensions = emptyList<Dimension>()
-    private var index : List<IntArray> = emptyList()
-    private var columns = mutableListOf<Column>()
+    private var index = emptyList<IntArray>()
+    var columns = mutableListOf<Column>()
 
-    val labels : List<String>
-        get() = columns.map { it.label }.toList()
+    val rowCount: Int
+        get() = index.size
 
-    /**
-     * Fill the table with netCDF variables.
-     *
-     * The model defines columns consisting of one or more netCDF variables and
-     * their corresponding dimension coordinates. All selected variable must
-     * have congruent dimensions.
-     *
-     * @param file: open netCDF file
-     * @param varNames: variable names to use
-     */
-    fun fillTable(file: NetcdfFile, varNames: Sequence<String>) {
-        clearTable()
-        this.file = file
-        varNames.forEach { addVariable(it) }
-        fireTableStructureChanged()
-    }
-
-    /**
-     * Add a variable as a new data column if it does not already exist in the
-     * table.
-     *
-     * @param name: netCDF variable name
-     */
-    fun addVariable(name: String) {
-        logger.debug("Loading $name variable from ${file?.location}")
-        val variable = file?.findVariable(name) ?: throw IllegalArgumentException("Invalid variable: $name")
-        if (dimensions.isEmpty()) {
-            dimensions = variable.publicDimensions
-            dimensions.forEach { addCoordinateColumn(it) }
-            val shape = dimensions.map { (0 until it.length) }.toTypedArray()
-            index = if (shape.isEmpty()) emptyList() else cartProd(*shape).map { it.toIntArray() }.toList()
-        } else if (!isCongruent(variable)) {
-            throw IllegalArgumentException("Cannot add incongruent variable '${name}' to table")
+    init {
+        variables.forEach {name ->
+            logger.debug("Loading $name variable from ${file.location}")
+            val variable = file.findVariable(name) ?: throw IllegalArgumentException("Invalid variable: $name")
+            if (dimensions.isEmpty()) {
+                dimensions = variable.publicDimensions
+                dimensions.forEach { addCoordinateColumn(it) }
+            } else if (!isCongruent(variable)) {
+                throw IllegalArgumentException("Cannot add incongruent variable '${name}' to table")
+            }
+            if (columns.find { it.label == name } == null) {
+                // Exclude duplicates, including variables that are already
+                // present as coordinate variables.
+                addVariableColumn(variable)
+            }
         }
-        if (columns.find { it.label == name } == null) {
-            // Exclude duplicates, including variables that are already present
-            // as coordinate variables.
-            addVariableColumn(variable)
+        val shape = dimensions.map { (0 until it.length) }.toTypedArray()
+        if (!shape.isEmpty()) {
+            index = cartProd(*shape).map { it.toIntArray() }.toList()
         }
     }
 
     /**
-     * Clear all columns from the table.
+     * Returns the value for the cell at `columnIndex` and `rowIndex`.
+     *
+     * @param rowIndex        the row whose value is to be queried
+     * @param columnIndex     the column whose value is to be queried
+     * @return value of the given table cell
      */
-    fun clearTable() {
-        dimensions = emptyList()
-        columns.clear()
-        index = emptyList()
-        file = null
-    }
+    fun getValueAt(rowIndex: Int, columnIndex: Int) =
+        columns[columnIndex].value(rowIndex)
 
     /**
      * Test if a variable has the same dimensions as the current table
@@ -223,7 +211,7 @@ internal class DataModel : AbstractTableModel() {
      * @param dimension: dimension to add a coordinate column for
      */
     private fun addCoordinateColumn(dimension: Dimension) {
-        val variable = file?.findVariable(dimension.fullName)
+        val variable = file.findVariable(dimension.fullName)
         if (variable?.isCoordinateVariable != true) {
             // No coordinate variable for this dimension.
             val axis = dimensions.indexOf(dimension)
@@ -249,6 +237,59 @@ internal class DataModel : AbstractTableModel() {
         columns.add(column)
     }
 
+}
+
+
+/**
+ * Represent n-dimensional netCDF variables as a two-dimensional table where
+ * variables are mapped to columns in flattened row-major order.
+*/
+internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
+
+    private val logger = Logger.getInstance(this::class.java)
+    private var file: NetcdfFile? = null
+    private var reader: NetcdfReader? = null
+
+    val labels : List<String>
+        get() = reader?.columns?.map { it.label }?.toList() ?: emptyList()
+
+    val pageCount: Int
+        get() {
+            val count = reader?.rowCount?.toDouble() ?: 0.0
+            return ceil(count.div(pageSize)).toInt()
+        }
+
+    var pageNumber: Int = 0
+        set(value) {
+           field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
+        }
+
+    /**
+     * Fill the table with netCDF variables.
+     *
+     * The model defines columns consisting of one or more netCDF variables and
+     * their corresponding dimension coordinates. All selected variable must
+     * have congruent dimensions.
+     *
+     * @param file: open netCDF file
+     * @param varNames: variable names to use
+     */
+    fun fillTable(file: NetcdfFile, varNames: Sequence<String>) {
+        this.file = file
+        reader = NetcdfReader(file, varNames)
+        pageNumber = 1
+        fireTableStructureChanged()
+    }
+
+    /**
+     * Clear all columns from the table.
+     */
+    fun clearTable() {
+        reader = null
+        pageNumber = 0
+        file = null
+    }
+
     /**
      * Returns the number of rows in the model. A
      * `JTable` uses this method to determine how many rows it
@@ -258,7 +299,11 @@ internal class DataModel : AbstractTableModel() {
      * @return the number of rows in the model
      * @see .getColumnCount
      */
-    override fun getRowCount() = index.size
+    override fun getRowCount() = if (pageNumber == pageCount) {
+        reader?.rowCount?.minus((pageCount - 1) * pageSize) ?: 0
+    } else {
+        pageSize
+    }
 
     /**
      * Returns the number of columns in the model. A
@@ -274,13 +319,13 @@ internal class DataModel : AbstractTableModel() {
      * Get the type for a column.
      */
     override fun getColumnClass(columnIndex: Int): Class<*> =
-        columns[columnIndex].type
+        reader?.columns?.get(columnIndex)?.type ?: throw RuntimeException("Table is undefined")
 
     /**
      * Get the name label for a column.
      */
     override fun getColumnName(columnIndex: Int) =
-        columns[columnIndex].label
+        labels[columnIndex]
 
     /**
      * Returns the value for the cell at `columnIndex` and
@@ -290,6 +335,9 @@ internal class DataModel : AbstractTableModel() {
      * @param   columnIndex     the column whose value is to be queried
      * @return  the value Object at the specified cell
      */
-    override fun getValueAt(rowIndex: Int, columnIndex: Int) =
-        columns[columnIndex].value(rowIndex)
+    override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
+        val fileRow = (pageNumber - 1) * pageSize + rowIndex
+        return reader?.columns?.get(columnIndex)?.value(fileRow)
+
+    }
 }
