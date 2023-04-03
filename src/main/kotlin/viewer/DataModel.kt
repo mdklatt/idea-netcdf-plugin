@@ -261,7 +261,8 @@ internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
 
     var pageNumber: Int = 0
         set(value) {
-           field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
+            field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
+            fireTableDataChanged()
         }
 
     /**

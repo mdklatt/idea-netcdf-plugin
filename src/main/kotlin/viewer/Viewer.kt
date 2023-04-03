@@ -28,6 +28,10 @@ import javax.swing.tree.*
 import kotlin.io.path.*
 import ucar.nc2.NetcdfFile
 import ucar.nc2.NetcdfFiles
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 
 private const val TITLE = "NetCDF"  // must match toolWindow ID in plugin.xml
@@ -254,13 +258,47 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
 
     override val title = "Data"
     override val description = "Data table for selected variables"
-    override val component = JBScrollPane(this)
+    override val component = JPanel()
 
     private var displayedVars = emptyList<String>()
+
+    private class Pager(private val model: DataModel): JPanel() {
+        init {
+            mapOf(
+                "<<<" to -9999,
+                "<<" to -10,
+                "<" to -1,
+                ">" to 1,
+                ">>" to 10,
+                ">>>" to 9999,
+            ).forEach { (icon, increment) ->
+                add(JButton(icon).also {
+                    // Can't use pageCount as an increment here because it's
+                    // not defined until a file is loaded.
+                    it.addActionListener {
+                        when {
+                            (increment == -9999) ->  model.pageNumber = 1
+                            (increment == 9999) -> model.pageNumber = model.pageCount
+                            else -> model.pageNumber += increment
+                        }
+                    }
+                })
+            }
+            add(JLabel().also{
+                // TODO: Dynamic update when pageCount or pageNumber changes.
+                it.text = "${model.pageNumber} / ${model.pageCount}"
+            })
+        }
+    }
 
     init {
         emptyText.text = "Select variable(s) in File tab"
         autoCreateRowSorter = true
+        component.let {
+            it.layout = BoxLayout(component, BoxLayout.Y_AXIS)
+            it.add(JBScrollPane(this))
+            it.add(Pager(model as DataModel))
+        }
     }
 
     /**
@@ -271,7 +309,7 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         val index = super.addContent(parent)
         parent.addChangeListener(object: ChangeListener {
             /**
-             * Invoked when parent state chages..
+             * Invoked when parent state changes.
              *
              * @param event  a ChangeEvent object
              */
