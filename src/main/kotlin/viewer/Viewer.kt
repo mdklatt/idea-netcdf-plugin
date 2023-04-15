@@ -28,7 +28,7 @@ import javax.swing.tree.*
 import kotlin.io.path.*
 import ucar.nc2.NetcdfFile
 import ucar.nc2.NetcdfFiles
-import javax.swing.BoxLayout
+import java.awt.BorderLayout
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -263,37 +263,50 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
     private var displayedVars = emptyList<String>()
     private val pager = Pager(model as DataModel)
 
+    /**
+     * Page selector component.
+     */
     private class Pager(private val model: DataModel): JPanel() {
 
         private val counter = JLabel()
 
-        init {
-            mapOf(
-                "<<<" to -9999,
-                "<<" to -10,
-                "<" to -1,
-                ">" to 1,
-                ">>" to 10,
-                ">>>" to 9999,
-            ).forEach { (icon, increment) ->
-                add(JButton(icon).also {
-                    // Can't use pageCount as an increment here because it's
-                    // not defined until a file is loaded.
-                    it.addActionListener {
-                        when {
-                            (increment == -9999) ->  model.pageNumber = 1
-                            (increment == 9999) -> model.pageNumber = model.pageCount
-                            else -> model.pageNumber += increment
-                        }
-                        updateCounter()
-                    }
-                })
+        /**
+         * Draw components.
+         */
+        fun draw() {
+            removeAll()
+            listOf(
+                Triple("<<<", -model.pageCount, "First page"),
+                Triple("<<", -10, "Back 10 pages"),
+                Triple("<", -1, "Back 1 page"),
+                Triple(">", 1, "Forward 1 page"),
+                Triple(">>", 10, "Forward 10 pages"),
+                Triple(">>>", model.pageCount, "Last page"),
+            ).forEach { (text, increment, description) ->
+                addButton(text, increment, description)
             }
             add(counter)
+            updateCounter()
         }
 
-        fun updateCounter() {
+        /**
+         * Update the counter.
+         */
+        private fun updateCounter() {
             counter.text = "${model.pageNumber} / ${model.pageCount}"
+        }
+
+        /**
+         * Add a button.
+         */
+        private fun addButton(text: String, increment: Int, description: String) {
+            add(JButton(text).also {
+                it.toolTipText = description
+                it.addActionListener {
+                    model.pageNumber += increment
+                    updateCounter()
+                }
+            })
         }
     }
 
@@ -301,9 +314,9 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         emptyText.text = "Select variable(s) in File tab"
         autoCreateRowSorter = true
         component.let {
-            it.layout = BoxLayout(component, BoxLayout.Y_AXIS)
-            it.add(JBScrollPane(this))
-            it.add(pager)
+            it.layout = BorderLayout()
+            it.add(JBScrollPane(this), BorderLayout.CENTER)
+            it.add(pager, BorderLayout.PAGE_END)
         }
     }
 
@@ -346,7 +359,7 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         (model as DataModel).fillTable(schemaTab.file, schemaTab.selectedVars.asSequence())
         displayedVars = schemaTab.selectedVars
         formatColumns()
-        pager.updateCounter()
+        pager.draw()
     }
 
     /**
