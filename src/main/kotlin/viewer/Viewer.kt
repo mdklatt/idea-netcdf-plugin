@@ -261,8 +261,12 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
     override val component = JPanel()
 
     private var displayedVars = emptyList<String>()
+    private val pager = Pager(model as DataModel)
 
     private class Pager(private val model: DataModel): JPanel() {
+
+        private val counter = JLabel()
+
         init {
             mapOf(
                 "<<<" to -9999,
@@ -281,13 +285,15 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
                             (increment == 9999) -> model.pageNumber = model.pageCount
                             else -> model.pageNumber += increment
                         }
+                        updateCounter()
                     }
                 })
             }
-            add(JLabel().also{
-                // TODO: Dynamic update when pageCount or pageNumber changes.
-                it.text = "${model.pageNumber} / ${model.pageCount}"
-            })
+            add(counter)
+        }
+
+        fun updateCounter() {
+            counter.text = "${model.pageNumber} / ${model.pageCount}"
         }
     }
 
@@ -297,7 +303,7 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         component.let {
             it.layout = BoxLayout(component, BoxLayout.Y_AXIS)
             it.add(JBScrollPane(this))
-            it.add(Pager(model as DataModel))
+            it.add(pager)
         }
     }
 
@@ -340,6 +346,7 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
         (model as DataModel).fillTable(schemaTab.file, schemaTab.selectedVars.asSequence())
         displayedVars = schemaTab.selectedVars
         formatColumns()
+        pager.updateCounter()
     }
 
     /**
