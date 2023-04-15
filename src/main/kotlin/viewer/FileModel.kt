@@ -10,7 +10,7 @@ import dev.mdklatt.idea.netcdf.*
 /**
  * Map a netCDF file schema to a tree structure.
  */
-internal class FileModel() : DefaultTreeModel(null) {
+internal class FileModel : DefaultTreeModel(null) {
     /**
      * Base class for file nodes.
      */
@@ -111,13 +111,13 @@ internal class FileModel() : DefaultTreeModel(null) {
             head.add(node)
         }
         group.attributes.forEach { node.add(DefaultMutableTreeNode(it)) }
+        addVariables(node, group.variables)
         if (group.groups.count() > 0) {
             DefaultMutableTreeNode("Groups").let {
                 node.add(it)
                 group.groups.forEach { sub -> addGroup(it, sub) }
             }
         }
-        addVariables(node, group.variables)
     }
 
     /**
