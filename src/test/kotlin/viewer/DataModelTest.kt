@@ -56,7 +56,7 @@ internal class DataModelTest {
     fun testRowCount() {
         model.fillTable(file, sequenceOf("pr"))
         assertEquals(10, model.rowCount)
-        model.pageNumber = 3277
+        model.setPageNumber(3277)
         assertEquals(8, model.rowCount)
     }
 
@@ -93,7 +93,7 @@ internal class DataModelTest {
     fun testGetCellValueAt() {
         // TODO: Add test for fixed-length strings.
         assertEquals("2000-05-16T12:00:00Z", model.getValueAt(0, 0))
-        model.pageNumber = 2
+        model.setPageNumber(2)
         assertEquals(215.08086f, model.getValueAt(1, 4))
     }
 }

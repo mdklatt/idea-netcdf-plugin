@@ -29,8 +29,6 @@ import kotlin.io.path.*
 import ucar.nc2.NetcdfFile
 import ucar.nc2.NetcdfFiles
 import java.awt.BorderLayout
-import javax.swing.JButton
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 
@@ -262,53 +260,6 @@ internal class DataTab(private val schemaTab: SchemaTab) : JBTable(DataModel()),
 
     private var displayedVars = emptyList<String>()
     private val pager = Pager(model as DataModel)
-
-    /**
-     * Page selector component.
-     */
-    private class Pager(private val model: DataModel): JPanel() {
-
-        private val counter = JLabel()
-
-        /**
-         * Draw components.
-         */
-        fun draw() {
-            removeAll()
-            listOf(
-                Triple("<<<", -model.pageCount, "First page"),
-                Triple("<<", -10, "Back 10 pages"),
-                Triple("<", -1, "Back 1 page"),
-                Triple(">", 1, "Forward 1 page"),
-                Triple(">>", 10, "Forward 10 pages"),
-                Triple(">>>", model.pageCount, "Last page"),
-            ).forEach { (text, increment, description) ->
-                addButton(text, increment, description)
-            }
-            add(counter)
-            updateCounter()
-        }
-
-        /**
-         * Update the counter.
-         */
-        private fun updateCounter() {
-            counter.text = "${model.pageNumber} / ${model.pageCount}"
-        }
-
-        /**
-         * Add a button.
-         */
-        private fun addButton(text: String, increment: Int, description: String) {
-            add(JButton(text).also {
-                it.toolTipText = description
-                it.addActionListener {
-                    model.pageNumber += increment
-                    updateCounter()
-                }
-            })
-        }
-    }
 
     init {
         emptyText.text = "Select variable(s) in File tab"

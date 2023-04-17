@@ -244,7 +244,7 @@ internal class NetcdfReader(private val file: NetcdfFile, variables: Sequence<St
  * Represent n-dimensional netCDF variables as a two-dimensional table where
  * variables are mapped to columns in flattened row-major order.
 */
-internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
+internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel(), Pageable {
 
     private val logger = Logger.getInstance(this::class.java)
     private var file: NetcdfFile? = null
@@ -253,17 +253,32 @@ internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
     val labels : List<String>
         get() = reader?.columns?.map { it.label }?.toList() ?: emptyList()
 
-    val pageCount: Int
-        get() {
-            val count = reader?.rowCount?.toDouble() ?: 0.0
-            return ceil(count.div(pageSize)).toInt()
-        }
+    private var pageNumber: Int = 0
 
-    var pageNumber: Int = 0
-        set(value) {
-            field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
-            fireTableDataChanged()
-        }
+    /**
+     *
+     */
+    override fun getTotalRowCount(): Int = reader?.rowCount ?: 0
+
+    /**
+     *
+     */
+    override fun getPageSize() = pageSize
+
+    /**
+     *
+     * @return
+     */
+    override fun getPageNumber(): Int = pageNumber
+
+    /**
+     *
+     * @param value
+     */
+    override fun setPageNumber(value: Int) {
+        pageNumber = if (getPageCount() == 0) 0 else value.coerceIn(1, getPageCount())
+        fireTableDataChanged()
+    }
 
     /**
      * Fill the table with netCDF variables.
@@ -300,8 +315,8 @@ internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
      * @return the number of rows in the model
      * @see .getColumnCount
      */
-    override fun getRowCount() = if (pageNumber == pageCount) {
-        reader?.rowCount?.minus((pageCount - 1) * pageSize) ?: 0
+    override fun getRowCount() = if (pageNumber == getPageCount()) {
+        reader?.rowCount?.minus((getPageCount() - 1) * pageSize) ?: 0
     } else {
         pageSize
     }
@@ -337,8 +352,7 @@ internal class DataModel(val pageSize: Int = 100) : AbstractTableModel() {
      * @return  the value Object at the specified cell
      */
     override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
-        val fileRow = (pageNumber - 1) * pageSize + rowIndex
+        val fileRow = (getPageNumber() - 1) * pageSize + rowIndex
         return reader?.columns?.get(columnIndex)?.value(fileRow)
-
     }
 }
