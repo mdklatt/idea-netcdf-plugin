@@ -26,7 +26,6 @@ internal class SaveFileDialogTest : BasePlatformTestCase() {
      * Per-test initialization.
      */
     override fun setUp() {
-        // FIXME: <https://github.com/mdklatt/idea-netcdf-plugin/issues/1>
         super.setUp()
         dialog = SaveFileDialog("Save File Test")
     }
