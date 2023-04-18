@@ -3,7 +3,6 @@ package dev.mdklatt.idea.netcdf.viewer
 import com.intellij.openapi.diagnostic.Logger
 import java.lang.IllegalStateException
 import javax.swing.table.AbstractTableModel
-import kotlin.math.ceil
 import ucar.nc2.Dimension
 import ucar.nc2.NetcdfFile
 import ucar.nc2.Variable
@@ -256,24 +255,30 @@ internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel()
     private var pageNumber: Int = 0
 
     /**
+     * Get the total number of rows to be paged.
      *
+     * @return row count
      */
     override fun getTotalRowCount(): Int = reader?.rowCount ?: 0
 
     /**
+     * Get the number of rows per page.
      *
+     * @return row count
      */
     override fun getPageSize() = pageSize
 
     /**
+     * Get the current page number.
      *
-     * @return
+     * @return page number (first page is 1)
      */
     override fun getPageNumber(): Int = pageNumber
 
     /**
+     * Set the current page number
      *
-     * @param value
+     * @param value page number (first page is 1)
      */
     override fun setPageNumber(value: Int) {
         pageNumber = if (getPageCount() == 0) 0 else value.coerceIn(1, getPageCount())
