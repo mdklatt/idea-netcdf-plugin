@@ -1,9 +1,12 @@
 package dev.mdklatt.idea.netcdf.viewer
 
+import com.intellij.ui.components.JBTextField
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.ceil
+import kotlin.math.log10
+import kotlin.math.max
 
 
 /**
@@ -56,7 +59,11 @@ internal interface Pageable {
  */
 internal class Pager(private val pages: Pageable): JPanel() {
 
-    private val counter = JLabel()
+    private val pageNumber = JBTextField().also { field ->
+        field.addActionListener {
+            updatePageNumber(field.text.toInt())
+        }
+    }
 
     /**
      * Draw components.
@@ -73,15 +80,23 @@ internal class Pager(private val pages: Pageable): JPanel() {
         ).forEach { (text, increment, description) ->
             addButton(text, increment, description)
         }
-        add(counter)
-        updateCounter()
+        val maxLength = ceil(log10(pages.getPageCount().toDouble())).toInt()
+        pageNumber.columns = max(maxLength, 1) + 1  // extra column for padding
+        add(JLabel("Page: "))
+        add(pageNumber)
+        add(JLabel(pages.getPageCount().toString()))
+        updatePageNumber(pages.getPageNumber())
     }
 
     /**
-     * Update the counter.
+     * Update the page number.
+     *
+     * @param number: new page number (first page is 1)
      */
-    private fun updateCounter() {
-        counter.text = "${pages.getPageNumber()} / ${pages.getPageCount()}"
+    private fun updatePageNumber(number: Int) {
+        // Round-trip the value to `pages` so it can validate it.
+        pages.setPageNumber(number)
+        pageNumber.text = pages.getPageNumber().toString()
     }
 
     /**
@@ -91,8 +106,7 @@ internal class Pager(private val pages: Pageable): JPanel() {
         add(JButton(text).also {
             it.toolTipText = description
             it.addActionListener {
-                pages.setPageNumber(pages.getPageNumber() + increment)
-                updateCounter()
+                updatePageNumber(pages.getPageNumber() + increment)
             }
         })
     }
