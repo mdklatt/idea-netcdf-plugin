@@ -15,6 +15,7 @@ plugins {
 
 
 kotlin {
+    jvmToolchain(11)
     sourceSets {
         val vendor by creating {
             kotlin.srcDir("src/vendor")
@@ -68,7 +69,7 @@ dependencies {
 tasks {
 
     wrapper {
-        gradleVersion = "7.5.1"
+        gradleVersion = "8.0.2"
     }
 
     patchPluginXml {
