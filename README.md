@@ -48,7 +48,10 @@ Write the file header to a [NetCDF Markup Language][9] (NcML) file.
 
 ## Installation
 
-[Releases][3] include a binary distribution named `idea-netcdf-plugin-<version>.zip` 
-that can be used to [install the plugin from disk][10].
+The latest version is available via a [custom plugin repository][10]. [Releases][3]
+include a binary distribution named `idea-ansible-plugin-<version>.zip` that
+can be [installed from disk][11].
 
-[10]: https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk
+
+[10]: https://mdklatt.github.io/idea-plugin-repo
+[11]: https://www.jetbrains.com/help/idea/managing-plugins.html#install_plugin_from_disk
