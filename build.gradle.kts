@@ -15,7 +15,6 @@ plugins {
 
 
 kotlin {
-    jvmToolchain(11)
     sourceSets {
         val vendor by creating {
             kotlin.srcDir("src/vendor")
