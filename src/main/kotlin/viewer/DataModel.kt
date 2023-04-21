@@ -243,7 +243,7 @@ internal class NetcdfReader(private val file: NetcdfFile, variables: Sequence<St
  * Represent n-dimensional netCDF variables as a two-dimensional table where
  * variables are mapped to columns in flattened row-major order.
 */
-internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel(), Pageable {
+internal class DataModel : PageableTableModel() {
 
     private val logger = Logger.getInstance(this::class.java)
     private var file: NetcdfFile? = null
@@ -251,39 +251,6 @@ internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel()
 
     val labels : List<String>
         get() = reader?.columns?.map { it.label }?.toList() ?: emptyList()
-
-    private var pageNumber: Int = 0
-
-    /**
-     * Get the total number of rows to be paged.
-     *
-     * @return row count
-     */
-    override fun getTotalRowCount(): Int = reader?.rowCount ?: 0
-
-    /**
-     * Get the number of rows per page.
-     *
-     * @return row count
-     */
-    override fun getPageSize() = pageSize
-
-    /**
-     * Get the current page number.
-     *
-     * @return page number (first page is 1)
-     */
-    override fun getPageNumber(): Int = pageNumber
-
-    /**
-     * Set the current page number
-     *
-     * @param value page number (first page is 1)
-     */
-    override fun setPageNumber(value: Int) {
-        pageNumber = if (getPageCount() == 0) 0 else value.coerceIn(1, getPageCount())
-        fireTableDataChanged()
-    }
 
     /**
      * Fill the table with netCDF variables.
@@ -298,6 +265,7 @@ internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel()
     fun fillTable(file: NetcdfFile, varNames: Sequence<String>) {
         this.file = file
         reader = NetcdfReader(file, varNames)
+        dataRowCount = reader?.rowCount ?: 0
         pageNumber = 1
         fireTableStructureChanged()
     }
@@ -308,22 +276,9 @@ internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel()
     fun clearTable() {
         reader = null
         pageNumber = 0
+        pageSize = 0
+        dataRowCount = 0
         file = null
-    }
-
-    /**
-     * Returns the number of rows in the model. A
-     * `JTable` uses this method to determine how many rows it
-     * should display.  This method should be quick, as it
-     * is called frequently during rendering.
-     *
-     * @return the number of rows in the model
-     * @see .getColumnCount
-     */
-    override fun getRowCount() = if (pageNumber == getPageCount()) {
-        reader?.rowCount?.minus((getPageCount() - 1) * pageSize) ?: 0
-    } else {
-        pageSize
     }
 
     /**
@@ -357,7 +312,6 @@ internal class DataModel(private val pageSize: Int = 100) : AbstractTableModel()
      * @return  the value Object at the specified cell
      */
     override fun getValueAt(rowIndex: Int, columnIndex: Int): Any? {
-        val fileRow = (getPageNumber() - 1) * pageSize + rowIndex
-        return reader?.columns?.get(columnIndex)?.value(fileRow)
+        return reader?.columns?.get(columnIndex)?.value(dataRowIndex(rowIndex))
     }
 }

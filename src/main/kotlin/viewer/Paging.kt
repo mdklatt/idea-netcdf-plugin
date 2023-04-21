@@ -4,60 +4,79 @@ import com.intellij.ui.components.JBTextField
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.table.AbstractTableModel
 import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.math.max
 
 
 /**
- * Interface for data that can be paged.
+ * Represent tabular data as multiple pages. Only data for the current page
+ * will be selectable.
  */
-internal interface Pageable {
+abstract class PageableTableModel: AbstractTableModel() {
+
+    var pageCount: Int = 0
+        protected set
+
+    var pageSize = 50
+        set(value) {
+            field = value
+            updatePageCount()
+        }
+
+    var pageNumber: Int = 0
+        set(value) {
+            field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
+            fireTableDataChanged()
+        }
+
+    protected var dataRowCount = 0
+        set(value) {
+            field = max(value, 0)
+            updatePageCount()
+        }
+
+    protected val pageRowCount
+        get() =
+            if (pageNumber == pageCount) {
+                dataRowCount - ((pageCount - 1) * pageSize)
+            } else {
+                pageSize
+            }
 
     /**
-     * Get the total number of rows to be paged.
-     *
-     * @return row count
+     * Update the number of pages.
      */
-    fun getTotalRowCount(): Int
-
-    /**
-     * Get the number of rows per page.
-     *
-     * @return row count
-     */
-    fun getPageSize(): Int
-
-    /**
-     * Get the total number of pages.
-     *
-     * @return page count
-     */
-    fun getPageCount(): Int {
-        val numerator = getTotalRowCount().toDouble()
-        return ceil(numerator.div(getPageSize())).toInt()
+    private fun updatePageCount() {
+        // For performance, only do this calculation as needed rather than
+        // overriding pageCount.get().
+        val numerator = dataRowCount.toDouble()
+        pageCount = ceil(numerator.div(pageSize)).toInt()
     }
 
     /**
-     * Get the current page number.
-     *
-     * @return page number (first page is 1)
+     * Translate a page row index to corresponding data row.
      */
-    fun getPageNumber(): Int
+    protected fun dataRowIndex(pageRowIndex: Int) = (pageNumber - 1) * pageSize + pageRowIndex
 
     /**
-     * Set the current page number
+     * Returns the number of rows in the model. A
+     * `JTable` uses this method to determine how many rows it
+     * should display.  This method should be quick, as it
+     * is called frequently during rendering.
      *
-     * @param value page number (first page is 1)
+     * @return the number of rows in the model
+     * @see .getColumnCount
      */
-    fun setPageNumber(value: Int)
+    override fun getRowCount() = pageRowCount
 }
 
 
 /**
  * Page selector UI component.
  */
-internal class Pager(private val pages: Pageable): JPanel() {
+internal class Pager(private val model: PageableTableModel): JPanel() {
 
     private val pageNumber = JBTextField().also { field ->
         field.addActionListener {
@@ -71,21 +90,21 @@ internal class Pager(private val pages: Pageable): JPanel() {
     fun draw() {
         removeAll()
         listOf(
-            Triple("<<<", -pages.getPageCount(), "First page"),
+            Triple("<<<", -model.pageCount, "First page"),
             Triple("<<", -10, "Back 10 pages"),
             Triple("<", -1, "Back 1 page"),
             Triple(">", 1, "Forward 1 page"),
             Triple(">>", 10, "Forward 10 pages"),
-            Triple(">>>", pages.getPageCount(), "Last page"),
+            Triple(">>>", model.pageCount, "Last page"),
         ).forEach { (text, increment, description) ->
             addButton(text, increment, description)
         }
-        val maxLength = ceil(log10(pages.getPageCount().toDouble())).toInt()
+        val maxLength = ceil(log10(model.pageCount.toDouble())).toInt()
         pageNumber.columns = max(maxLength, 1) + 1  // extra column for padding
         add(JLabel("Page: "))
         add(pageNumber)
-        add(JLabel(pages.getPageCount().toString()))
-        updatePageNumber(pages.getPageNumber())
+        add(JLabel(model.pageCount.toString()))
+        updatePageNumber(model.pageNumber)
     }
 
     /**
@@ -95,8 +114,8 @@ internal class Pager(private val pages: Pageable): JPanel() {
      */
     private fun updatePageNumber(number: Int) {
         // Round-trip the value to `pages` so it can validate it.
-        pages.setPageNumber(number)
-        pageNumber.text = pages.getPageNumber().toString()
+        model.pageNumber = number
+        pageNumber.text = model.pageNumber.toString()
     }
 
     /**
@@ -106,7 +125,7 @@ internal class Pager(private val pages: Pageable): JPanel() {
         add(JButton(text).also {
             it.toolTipText = description
             it.addActionListener {
-                updatePageNumber(pages.getPageNumber() + increment)
+                updatePageNumber(model.pageNumber + increment)
             }
         })
     }
