@@ -25,9 +25,9 @@ abstract class PageableTableModel: AbstractTableModel() {
             updatePageCount()
         }
 
-    var pageNumber: Int = 0
+    var pageNumber: Int = 1
         set(value) {
-            field = if (pageCount == 0) 0 else value.coerceIn(1, pageCount)
+            field = if (pageCount == 0) 1 else value.coerceIn(1, pageCount)
             fireTableDataChanged()
         }
 
@@ -37,7 +37,7 @@ abstract class PageableTableModel: AbstractTableModel() {
             updatePageCount()
         }
 
-    protected val pageRowCount
+    private val pageRowCount
         get() =
             if (pageNumber == pageCount) {
                 dataRowCount - ((pageCount - 1) * pageSize)
@@ -58,7 +58,7 @@ abstract class PageableTableModel: AbstractTableModel() {
     /**
      * Translate a page row index to corresponding data row.
      */
-    protected fun dataRowIndex(pageRowIndex: Int) = (pageNumber - 1) * pageSize + pageRowIndex
+    fun dataRowIndex(pageRowIndex: Int) = (pageNumber - 1) * pageSize + pageRowIndex
 
     /**
      * Returns the number of rows in the model. A
@@ -84,6 +84,18 @@ internal class Pager(private val model: PageableTableModel): JPanel() {
         }
     }
 
+    private val pageSize = JBTextField().also { field ->
+        field.addActionListener {
+            val index = model.dataRowIndex(0)
+            model.pageSize = field.text.toInt()
+            updatePageNumber((index / model.pageSize) + 1)
+            updatePageCount()
+        }
+    }
+
+    private val pageCount = JLabel()
+
+
     /**
      * Draw components.
      */
@@ -103,8 +115,12 @@ internal class Pager(private val model: PageableTableModel): JPanel() {
         pageNumber.columns = max(maxLength, 1) + 1  // extra column for padding
         add(JLabel("Page: "))
         add(pageNumber)
-        add(JLabel(model.pageCount.toString()))
+        add(pageCount)
+        add(pageSize.also {
+            it.text = model.pageSize.toString()
+        })
         updatePageNumber(model.pageNumber)
+        updatePageCount()
     }
 
     /**
@@ -116,6 +132,13 @@ internal class Pager(private val model: PageableTableModel): JPanel() {
         // Round-trip the value to `pages` so it can validate it.
         model.pageNumber = number
         pageNumber.text = model.pageNumber.toString()
+    }
+
+    /**
+     * Update the page count display.
+     */
+    private fun updatePageCount() {
+        pageCount.text = " / ${model.pageCount}"
     }
 
     /**
