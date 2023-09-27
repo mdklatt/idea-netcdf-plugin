@@ -95,7 +95,6 @@ internal class Pager(private val model: PageableTableModel): JPanel() {
 
     private val pageCount = JLabel()
 
-
     /**
      * Draw components.
      */
@@ -113,9 +112,10 @@ internal class Pager(private val model: PageableTableModel): JPanel() {
         }
         val maxLength = ceil(log10(model.pageCount.toDouble())).toInt()
         pageNumber.columns = max(maxLength, 1) + 1  // extra column for padding
-        add(JLabel("Page: "))
+        add(JLabel("Number:"))
         add(pageNumber)
         add(pageCount)
+        add(JLabel("Size: "))
         add(pageSize.also {
             it.text = model.pageSize.toString()
         })

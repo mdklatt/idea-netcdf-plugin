@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog][0], and this project adheres to
 
 ## [Unreleased]
 ### Added
+- Added pagination to data view.
 
 ### Changed
 
