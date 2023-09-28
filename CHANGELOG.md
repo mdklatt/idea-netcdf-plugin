@@ -3,7 +3,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog][0], and this project adheres to 
 [Semantic Versioning][1].
 
-## [1.1.0] - 2023-09-27
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## 1.1.0 - 2023-09-27
 
 ### Added
 - Added pagination to data view.
