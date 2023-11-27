@@ -8,8 +8,8 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 
 plugins {
-    kotlin("jvm") version("1.8.20")
-    id("org.jetbrains.intellij") version("1.13.3")
+    kotlin("jvm") version("1.9.20")
+    id("org.jetbrains.intellij") version("1.16.0")
     id("org.jetbrains.changelog") version("2.0.0")
 }
 
@@ -58,17 +58,17 @@ dependencies {
     runtimeOnly("edu.ucar:netcdf4:${netcdfVersion}")
     runtimeOnly("org.slf4j:slf4j-jdk14:2.0.0")
     testImplementation(kotlin("test"))
-    testImplementation(platform("org.junit:junit-bom:5.9.0"))
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")  // required for IDE platform tests
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")  // JUnit test runner
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")  // JUnit test runner
 }
 
 
 tasks {
 
     wrapper {
-        gradleVersion = "8.0.2"
+        gradleVersion = "8.4.0"
     }
 
     patchPluginXml {

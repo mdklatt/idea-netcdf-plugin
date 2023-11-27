@@ -1,4 +1,4 @@
-# IDEA NetCDF Plugin
+# NetCDF Plugin for IDEA
 
 [![IDEA version][1]][7]
 [![Latest release][2]][3]
