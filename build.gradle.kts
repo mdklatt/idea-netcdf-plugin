@@ -3,13 +3,14 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.date
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
 
 
 plugins {
     kotlin("jvm") version("1.9.20")
-    id("org.jetbrains.intellij") version("1.16.0")
+    id("org.jetbrains.intellij") version("1.16.1")
     id("org.jetbrains.changelog") version("2.0.0")
 }
 
@@ -66,6 +67,15 @@ dependencies {
 
 
 tasks {
+
+    withType<JavaCompile> {
+        sourceCompatibility = properties("javaVersion")
+        targetCompatibility = properties("javaVersion")
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = properties("javaVersion")
+    }
 
     wrapper {
         gradleVersion = "8.4.0"

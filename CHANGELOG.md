@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog][0], and this project adheres to
 
 ### Security
 
-## 1.1.0 - 2023-09-27
+## [1.1.0] - 2023-09-27
 
 ### Added
 - Added pagination to data view.
