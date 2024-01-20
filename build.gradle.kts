@@ -57,7 +57,6 @@ dependencies {
     val netcdfVersion = "5.4.2"
     implementation("edu.ucar:cdm-core:${netcdfVersion}")
     runtimeOnly("edu.ucar:netcdf4:${netcdfVersion}")
-    runtimeOnly("org.slf4j:slf4j-jdk14:2.0.0")
     testImplementation(kotlin("test"))
     testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter-params")
