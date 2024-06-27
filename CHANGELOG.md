@@ -3,7 +3,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog][0], and this project adheres to 
 [Semantic Versioning][1].
 
-## [1.2.0] - 2024-01-20
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+- Fixed display of non-string attributes.
+
+### Security
+
+## 1.2.0 - 2024-01-20
 
 ### Changed
 - Bumped minimum IDEA version to 2023.1.

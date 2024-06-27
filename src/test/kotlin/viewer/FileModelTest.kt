@@ -34,9 +34,13 @@ internal class FileModelTest {
     fun testFillTree() {
         model.fillTree(file)
         assertEquals(file.location, model.root.toString())
-        val variablesNode = model.getChild(model.root, 18)
-        assertEquals("Variables", variablesNode.toString())
-        assertEquals(12, model.getChildCount(variablesNode))
-        assertEquals("area: float[128, 256]", model.getChild(variablesNode, 0).toString())
+        val stringAttribute = model.getChild(model.root, 1)
+        val numericAttribute = model.getChild(model.root, 13)
+        assertEquals(":Conventions = \"CF-1.0\"", stringAttribute.toString())
+        assertEquals(":realization = 1", numericAttribute.toString())
+        val variables = model.getChild(model.root, 18)
+        assertEquals("Variables", variables.toString())
+        assertEquals(12, model.getChildCount(variables))
+        assertEquals("area: float[128, 256]", model.getChild(variables, 0).toString())
     }
 }

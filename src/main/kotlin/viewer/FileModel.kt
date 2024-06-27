@@ -20,9 +20,7 @@ internal class FileModel : DefaultTreeModel(null) {
 
         /** Node attributes. */
         val attributes: Sequence<String>
-            get() = fileNode.attributes.sortedBy { it.fullName }.map {
-                "${it.fullName}: ${it.stringValue}"
-            }.asSequence()
+            get() = fileNode.attributes.sortedBy { it.name }.map { it.toString() }.asSequence()
 
         /**
          * String representation.
@@ -110,7 +108,9 @@ internal class FileModel : DefaultTreeModel(null) {
             node = DefaultMutableTreeNode(group)
             head.add(node)
         }
-        group.attributes.forEach { node.add(DefaultMutableTreeNode(it)) }
+        group.attributes.forEach { attr ->
+            node.add(DefaultMutableTreeNode(attr))
+        }
         addVariables(node, group.variables)
         if (group.groups.count() > 0) {
             DefaultMutableTreeNode("Groups").let {
@@ -135,7 +135,9 @@ internal class FileModel : DefaultTreeModel(null) {
             variables.forEach {
                 DefaultMutableTreeNode(it).apply {
                     node.add(this)
-                    it.attributes.forEach { this.add(DefaultMutableTreeNode(it)) }
+                    it.attributes.forEach { attr ->
+                        this.add(DefaultMutableTreeNode(attr))
+                    }
                     addDimensions(this, it.dimensions)
                 }
             }
