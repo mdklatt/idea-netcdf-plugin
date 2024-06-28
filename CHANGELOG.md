@@ -14,9 +14,13 @@ The format is based on [Keep a Changelog][0], and this project adheres to
 ### Removed
 
 ### Fixed
-- Fixed display of non-string attributes.
 
 ### Security
+
+## 1.2.1 - 2024-06-28
+
+### Fixed
+- Fixed display of non-string attributes.
 
 ## 1.2.0 - 2024-01-20
 
